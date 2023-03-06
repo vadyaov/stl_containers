@@ -2,35 +2,37 @@
 #define _vector_
 
 #include <memory>
+#include <iostream>
 
 namespace s21 {
 
   template<typename T, typename A = std::allocator<T>>
-    struct vector_base {
-      T* elem;  // начало выделяемой памяти
-      T* space; // начало области памяти для расширения, конец последовательности элементов
-      T* last;  // конец выделенной памяти
-      A alloc;  // аллокатор для запрашивания памяти под элементы
+    class vector_base {
+      public:
+        T* elem;  // начало выделяемой памяти
+        T* space; // начало области памяти для расширения, конец последовательности элементов
+        T* last;  // конец выделенной памяти
+        A alloc;  // аллокатор для запрашивания памяти под элементы
 
-      vector_base() : elem{nullptr}, space{nullptr}, last{nullptr}, alloc{A()} {}
+        vector_base() : elem{nullptr}, space{nullptr}, last{nullptr}, alloc{A()} {}
 
-      explicit vector_base(const A& a) noexcept : elem{nullptr}, space{nullptr}, last{nullptr}, alloc{a} {}
+        explicit vector_base(const A& a) noexcept : elem{nullptr}, space{nullptr}, last{nullptr}, alloc{a} {}
 
-      vector_base(const A& a, typename A::size_type n) : alloc{a}, elem{alloc.allocate(n)}, space{elem + n}, last{elem + n} {}
+        vector_base(const A& a, typename A::size_type n) : alloc{a}, elem{alloc.allocate(n)}, space{elem + n}, last{elem + n} {}
 
-      ~vector_base() {alloc.deallocate(elem, last - elem);}
-      
-      vector_base(const vector_base&) = delete; // no copy operations
-      vector_base& operator=(const vector_base&) = delete;
+        ~vector_base() {alloc.deallocate(elem, last - elem);}
+        
+        vector_base(const vector_base&) = delete; // no copy operations
+        vector_base& operator=(const vector_base&) = delete;
 
-      vector_base(vector_base&& other) noexcept : elem{other.elem}, space{other.space}, last{other.last}, alloc{other.alloc} {
-        other.elem = other.last = other.space = nullptr;
-      }
+        vector_base(vector_base&& other) noexcept : alloc{other.alloc}, elem{other.elem}, space{other.space}, last{other.last} {
+          other.elem = other.last = other.space = nullptr;
+        }
 
-      vector_base& operator=(vector_base&& other) noexcept {
-        std::swap(*this, other);
-        return *this;
-      }
+        vector_base& operator=(vector_base&& other) noexcept {
+          std::swap(*this, other);
+          return *this;
+        }
     };
 
   template<typename T, typename A = std::allocator<T>>
@@ -138,7 +140,17 @@ namespace s21 {
       iterator begin() { return vb.elem; }
       iterator end() { return vb.space; }
 
-/*       void reserve(size_type); // увеличиваем емкость */
+      void reserve(size_type newalloc) {
+        if (newalloc <= capacity()) return;
+
+        vector_base<T, A> b {vb.alloc, newalloc};
+        std::uninitialized_move(vb.elem, vb.elem + size(), b.elem);
+        b.space = b.elem + size();
+        std::swap(vb.elem, b.elem);
+        std::swap(vb.space, b.space);
+        std::swap(vb.last, b.last);
+        std::swap(vb.alloc, b.alloc);
+      }
 /*       void resize(size_type, T = {}); // изменяем число элементов */
 /*       void clear(){resize(0);} // опустошаем вектор */
 /*       void push_back(const T&); // добавляем элемент в конец */

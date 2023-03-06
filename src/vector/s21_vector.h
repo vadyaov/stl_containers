@@ -18,7 +18,11 @@ namespace s21 {
 
         explicit vector_base(const A& a) noexcept : elem{nullptr}, space{nullptr}, last{nullptr}, alloc{a} {}
 
-        vector_base(const A& a, typename A::size_type n) : alloc{a}, elem{alloc.allocate(n)}, space{elem + n}, last{elem + n} {}
+        vector_base(const A& a, typename A::size_type n) : alloc{a} {
+          elem = alloc.allocate(n);
+          space = elem + n;
+          last = elem + n;
+        }
 
         ~vector_base() {alloc.deallocate(elem, last - elem);}
         
@@ -144,12 +148,11 @@ namespace s21 {
         if (newalloc <= capacity()) return;
 
         vector_base<T, A> b {vb.alloc, newalloc};
-        std::uninitialized_move(vb.elem, vb.elem + size(), b.elem);
+        std::uninitialized_copy(vb.elem, vb.elem + size(), b.elem);
         b.space = b.elem + size();
         std::swap(vb.elem, b.elem);
         std::swap(vb.space, b.space);
         std::swap(vb.last, b.last);
-        std::swap(vb.alloc, b.alloc);
       }
 /*       void resize(size_type, T = {}); // изменяем число элементов */
 /*       void clear(){resize(0);} // опустошаем вектор */

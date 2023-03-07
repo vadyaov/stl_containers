@@ -2,7 +2,8 @@
 #define _vector_
 
 #include <memory>
-#include <iostream>
+#include <exception>
+/* #include <iostream> */
 
 namespace s21 {
 
@@ -154,7 +155,22 @@ namespace s21 {
         std::swap(vb.space, b.space);
         std::swap(vb.last, b.last);
       }
-/*       void resize(size_type, T = {}); // изменяем число элементов */
+
+      void resize(size_type count) { // изменяем число элементов
+        resize(count, T());
+      }
+
+      void resize(size_type newsize, const_reference value) {
+        reserve(newsize > capacity() ? capacity() * 2 : newsize);
+        if (size() < newsize) {
+          std::uninitialized_fill(vb.elem + size(), vb.elem + newsize, value);
+        } else {
+          for (pointer p = vb.elem + newsize; p != vb.elem + size(); ++p)
+            p->~T();
+        }
+        vb.space = vb.elem + newsize;
+      }
+
 /*       void clear(){resize(0);} // опустошаем вектор */
 /*       void push_back(const T&); // добавляем элемент в конец */
 /*       void pop_back(); // удаляем элемент с конца */

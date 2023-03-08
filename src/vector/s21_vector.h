@@ -3,52 +3,64 @@
 
 #include <memory>
 #include <exception>
-/* #include <iostream> */
+#include <iostream>
 
 namespace s21 {
 
   template<typename T, typename A = std::allocator<T>>
     class vector_base {
       public:
-        T* elem;  // начало выделяемой памяти
-        T* space; // начало области памяти для расширения, конец последовательности элементов
-        T* last;  // конец выделенной памяти
-        A alloc;  // аллокатор для запрашивания памяти под элементы
+        T* elem;
+        T* space;
+        T* last;
+        A alloc;
 
-        vector_base() : elem{nullptr}, space{nullptr}, last{nullptr}, alloc{A()} {}
+        vector_base() : elem{nullptr},
+                        space{nullptr},
+                        last{nullptr},
+                        alloc{A()} {}
 
-        explicit vector_base(const A& a) noexcept : elem{nullptr}, space{nullptr}, last{nullptr}, alloc{a} {}
+        explicit vector_base(const A& a) noexcept : elem{nullptr},
+                                                    space{nullptr},
+                                                    last{nullptr},
+                                                    alloc{a} {}
 
         vector_base(const A& a, typename A::size_type n) : alloc{a} {
           elem = alloc.allocate(n);
-          space = elem + n;
-          last = elem + n;
+          space = last = elem + n;
         }
-
-        ~vector_base() {alloc.deallocate(elem, last - elem);}
         
-        vector_base(const vector_base&) = delete; // no copy operations
+        vector_base(const vector_base&) = delete;
         vector_base& operator=(const vector_base&) = delete;
 
-        vector_base(vector_base&& other) noexcept : alloc{other.alloc}, elem{other.elem}, space{other.space}, last{other.last} {
-          other.elem = other.last = other.space = nullptr;
+        vector_base(vector_base&& other) noexcept : vector_base() {
+          swap(*this, other);
         }
 
-        vector_base& operator=(vector_base&& other) noexcept {
-          std::swap(*this, other);
-          return *this;
+        vector_base(vector_base&& other, const A& a) noexcept : vector_base() {
+          swap(*this, other);
+          alloc = a;
+        }
+
+        /* vector_base& operator=(vector_base&& other) noexcept { */
+        /*   std::swap(*this, other); */
+        /*   return *this; */
+        /* } */
+
+        ~vector_base() { alloc.deallocate(elem, last - elem); }
+
+        friend void swap(vector_base<T, A>& first, vector_base<T, A>& second) {
+          std::swap(first.elem, second.elem);
+          std::swap(first.space, second.space);
+          std::swap(first.last, second.last);
         }
     };
 
   template<typename T, typename A = std::allocator<T>>
   class vector {
       vector_base<T, A> vb;
-      void destroy_elements() {
-        for (T* p = vb.elem; p != vb.space; ++p)
-          p->~T();
-      }
     public:
-      using size_type = unsigned int;
+      using size_type = std::size_t;
       using value_type = T;
       using allocator_type = A;
 
@@ -64,33 +76,46 @@ namespace s21 {
       /* using reverse_iterator = std::reverse_iterator<iterator>; */
 
       using difference_type = std::ptrdiff_t;
-      // Default constructor. Constructs an empty container with a default-constructed allocator.
-      vector() : vb{} {}
 
-      // Constructs an empty container with the given allocator alloc.
-      explicit vector(const A& a) noexcept : vb{a} {} // +
-
-/*       // Constructs the container with count copies of elements with value value. */
-      explicit vector(size_type count, const T& value = T(), const A& a = A()) : vb{a, count} {
+/*1*/ vector() : vb{} {}
+/*2*/ explicit vector(const A& a) noexcept : vb{a} {} // +
+/*3*/ explicit vector(size_type count, const T& value = T(),
+                      const A& a = A()) : vb{a, count}{
         std::uninitialized_fill(vb.elem, vb.elem + count, value);
       }
-
-      // Constructs the container with count default-inserted instances of T. No copies are made.
-      explicit vector(size_type count, const A& a) : vb{a, count} {
-        std::uninitialized_fill(vb.elem, vb.elem + count, T());
+/*4*/ explicit vector(size_type count, const A& a) : vb{a, count} {
+        std::uninitialized_fill(vb.elem, vb.elem + count, value_type());
       }
-
-/*       // Constructs the container with the contents of the range [first, last). */ 
-/*       template<class InputIt> vector( InputIt first, InputIt last, const A& alloc = A() ); */
+/*5*/ /* template<class InputIt> vector( InputIt first, InputIt last, const A& alloc = A() ); */
 
       // Copy constructor. Constructs the container with the copy of the contents of other.
-      vector(const vector<T, A>& other) : vb{other.alloc, other.size()} {
+/*6*/ vector(const vector<value_type, allocator_type>& other) : vb{other.vb.alloc, other.size()} {
         std::uninitialized_copy(other.begin(), other.end(), vb.elem);
       }
 
       // Constructs the container with the copy of the contents of other, using alloc as the allocator.
-      vector(const vector& other, const A& alloc) : vb{alloc, other.size()} {
+/*7*/ vector(const vector& other, const allocator_type& alloc) : vb{alloc, other.size()} {
         std::uninitialized_copy(other.begin(), other.end(), vb.elem);
+      }
+
+      // Move constructor. Constructs the container with the contents of other using move semantics.
+      // A is obtained by move-construction from the allocator belonging to other.
+      // After the move, other is guaranteed to be empty().
+/*8*/ vector(vector&& other) noexcept : vb{std::move(other.vb)} {}
+
+/*       // A-extended move constructor. Using alloc as the allocator for the new container, */
+/*       // moving the contents from other; if alloc != other.get_allocator(), this results in an element-wise move. */
+/*       // (In that case, other is not guaranteed to be empty after the move.) */
+/*9*/ vector(vector&& other, const A& alloc) : vb{std::move(other.vb), alloc} {}
+
+      // Constructs the container with the contents of the initializer list init.
+/*10*/vector(std::initializer_list<T> init, const A& alloc = A()) : vb {alloc, init.size()} {
+        std::uninitialized_copy(init.begin(), init.end(), vb.elem);
+      }
+
+      ~vector() {
+        for (pointer p = vb.elem; p != vb.space; ++p)
+          vb.alloc.destroy(p);
       }
 
       vector& operator=(const vector& other) {
@@ -107,8 +132,8 @@ namespace s21 {
         vb.alloc = other.vb.alloc;
         if (osz <= sz) {
           std::copy(other.begin(), other.begin() + osz, vb.elem);
-          for (T* p = vb.elem + osz; p != vb.space; ++p)
-            p->~T();
+          for (pointer p = vb.elem + osz; p != vb.space; ++p)
+            vb.alloc.destroy(p);
         } else {
           std::copy(other.begin(), other.begin() + sz, vb.elem);
           std::uninitialized_copy(other.begin() + sz, other.end(), vb.space);
@@ -117,33 +142,33 @@ namespace s21 {
         return *this;
       }
 
-      // Move constructor. Constructs the container with the contents of other using move semantics.
-      // A is obtained by move-construction from the allocator belonging to other.
-      // After the move, other is guaranteed to be empty().
-      vector(vector&& other) noexcept : vb{std::move(other.vb)} {} // +
-
-/*       // A-extended move constructor. Using alloc as the allocator for the new container, */
-/*       // moving the contents from other; if alloc != other.get_allocator(), this results in an element-wise move. */
-/*       // (In that case, other is not guaranteed to be empty after the move.) */
-/*       vector(vector&& other, const A& alloc); */
-
       vector& operator=(vector&& other) noexcept {
-        // clear(); // need to implement
-        /* vb = std::move(other.vb); */
-        std::swap(*this, other); // this mb instead of previous line
+        clear();
+        swap(vb, other.vb);
+        other.vb.elem = other.vb.space = other.vb.last = nullptr; // idk about this line, did it for zero capacity after swap
         return *this;
       }
 
-/*       // Constructs the container with the contents of the initializer list init. */
-/*       vector(std::initializer_list<T> init, const A& alloc = A()); */
+      vector& operator=(std::initializer_list<T> ilist) {
+        vector<T, A> tmp{ilist};
+        *this = tmp;
+        return *this;
+      }
 
-      ~vector() {destroy_elements();}
+      void assign(size_type count, const T& value) {
+        vector b {count, value, vb.alloc};
+        *this = b;
+      }
+
+      /* template<typename InputIt> */
+      /* void assign(InputIt first, InputIt last) { */
+      /* } */
 
       size_type size() const { return vb.space - vb.elem; }
       size_type capacity() const { return vb.last - vb.elem; }
 
-      iterator begin() { return vb.elem; }
-      iterator end() { return vb.space; }
+      iterator begin() const { return vb.elem; }
+      iterator end() const { return vb.space; }
 
       void reserve(size_type newalloc) {
         if (newalloc <= capacity()) return;
@@ -151,29 +176,36 @@ namespace s21 {
         vector_base<T, A> b {vb.alloc, newalloc};
         std::uninitialized_copy(vb.elem, vb.elem + size(), b.elem);
         b.space = b.elem + size();
-        std::swap(vb.elem, b.elem);
-        std::swap(vb.space, b.space);
-        std::swap(vb.last, b.last);
+        swap(vb, b);
       }
 
-      void resize(size_type count) { // изменяем число элементов
-        resize(count, T());
-      }
-
-      void resize(size_type newsize, const_reference value) {
-        reserve(newsize > capacity() ? capacity() * 2 : newsize);
+      void resize(size_type newsize, const_reference value = T()) {
+        reserve(newsize > capacity() && capacity() ? capacity() * 2 : newsize);
         if (size() < newsize) {
           std::uninitialized_fill(vb.elem + size(), vb.elem + newsize, value);
         } else {
           for (pointer p = vb.elem + newsize; p != vb.elem + size(); ++p)
-            p->~T();
+            vb.alloc.destroy(p);
         }
         vb.space = vb.elem + newsize;
       }
 
-/*       void clear(){resize(0);} // опустошаем вектор */
-/*       void push_back(const T&); // добавляем элемент в конец */
-/*       void pop_back(); // удаляем элемент с конца */
+      void clear() { resize(0); }
+
+      void push_back(const T& value) {
+        if (capacity() == size())
+          reserve(size() ? size() * 2 : 1);
+        vb.alloc.construct(&vb.elem[size()], value);
+        ++vb.space;
+      }
+
+      void pop_back() {
+        if (size())
+          vb.alloc.destroy(&vb.elem[size() - 1]);
+        if (vb.space != nullptr)
+          --vb.space;
+      }
+
 
   };
 

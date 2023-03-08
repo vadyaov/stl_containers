@@ -160,9 +160,10 @@ namespace s21 {
         *this = b;
       }
 
-      /* template<typename InputIt> */
-      /* void assign(InputIt first, InputIt last) { */
-      /* } */
+      template<typename InputIt>
+      void assign(InputIt first, InputIt last) {
+        std::cout << "ASDASDD"; 
+      }
 
       size_type size() const { return vb.space - vb.elem; }
       size_type capacity() const { return vb.last - vb.elem; }

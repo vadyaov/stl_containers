@@ -11,7 +11,7 @@ int main() {
     std::cout << i << " ";
   std::cout << std::endl;
 
-  /* const std::vector<int> extra (1, -3); */
+  /* const std::vector<int> extra (10, -3); */
   /* a.assign(extra.begin(), extra.end()); */
   a.assign(3, -1);
 

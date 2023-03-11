@@ -61,11 +61,11 @@ namespace s21 {
       vector_base<T, A> vb;
     public:
       using size_type = std::size_t;
-      using value_type = T;
+      using value_type = typename std::allocator_traits<A>::value_type;
       using allocator_type = A;
 
-      using reference = value_type&;
-      using const_reference = const value_type&;
+      using reference = typename A::reference;
+      using const_reference = typename A::const_reference;
 
       using pointer = typename std::allocator_traits<A>::pointer;
       using const_pointer = typename std::allocator_traits<A>::const_pointer;
@@ -73,7 +73,8 @@ namespace s21 {
       using iterator = value_type*;
       using const_iterator = const value_type*;
 
-      /* using reverse_iterator = std::reverse_iterator<iterator>; */
+      /* using reverse_iterator = iterator; */
+      /* using const_reverse_iterator = const_iterator; */
 
       using difference_type = std::ptrdiff_t;
 
@@ -160,25 +161,100 @@ namespace s21 {
         *this = b;
       }
 
-      template<typename InputIt>
-      void assign(InputIt first, InputIt last) {
-        std::cout << "ASDASDD"; 
+      // Maybe i should think about iterators to do this
+
+      /* template<typename InputIt> */
+      /* void assign(InputIt first, InputIt last) { */
+      /*   std::cout << "ASDASDD"; */ 
+      /* } */
+
+      void assign (std::initializer_list<T> ilist) { *this = ilist; }
+
+      allocator_type get_allocator() const noexcept { return vb.alloc; }
+
+      reference at(size_type pos) {
+        if (!(pos < size())) throw std::out_of_range("argument is out of vector range");
+        return vb.elem[pos];
       }
 
-      size_type size() const { return vb.space - vb.elem; }
-      size_type capacity() const { return vb.last - vb.elem; }
+      const_reference at(size_type pos) const {
+        if (!(pos < size())) throw std::out_of_range("argument is out of vector range");
+        return vb.elem[pos];
+      }
 
-      iterator begin() const { return vb.elem; }
-      iterator end() const { return vb.space; }
+      reference operator[](size_type pos) { return vb.elem[pos]; }
+
+      const_reference operator[](size_type pos) const { return vb.elem[pos]; }
+
+      reference front() { return *vb.elem; }
+
+      const reference front() const { return *vb.elem; }
+
+      reference back() { return *(vb.space - 1); }
+
+      const_reference back() const { return *(vb.space - 1); }
+
+      pointer data() noexcept { return vb.elem; }
+
+      const_pointer data() const noexcept { return vb.elem; }
+
+      // need to rework this totally!!!!
+      // need class iterator inside vector because i.g, when i work with reverse
+      // iterators ++operation means --operation !!
+      iterator begin() noexcept { return vb.elem; }
+      const_iterator begin() const noexcept { return vb.elem; }
+      const_iterator cbegin() const noexcept { return vb.elem; }
+
+      iterator end() noexcept { return vb.space; }
+      const_iterator end() const noexcept { return vb.space; }
+      const_iterator cend() const noexcept { return vb.space; }
+
+      iterator rbegin() noexcept { return vb.space - 1; }
+
+      const_iterator rbegin() const { return vb.space - 1; }
+
+      const_iterator crbegin() const noexcept { return vb.space - 1; }
+
+      iterator rend() noexcept { return vb.elem - 1; }
+
+      const_iterator rend() const { return vb.elem - 1; }
+
+      const_iterator crend() const noexcept { return vb.elem - 1; }
+      // REWORK ITERATORS //
+
+
+
+
+      bool empty() const noexcept {return !size();};
+
+      size_type size() const noexcept { return vb.space - vb.elem; }
+      /* size_type max_size() const {  ;} */
 
       void reserve(size_type newalloc) {
         if (newalloc <= capacity()) return;
+        /* if (newalloc > max_size()) throw std::length_error("newalloc > max_size()"); */
 
         vector_base<T, A> b {vb.alloc, newalloc};
         std::uninitialized_copy(vb.elem, vb.elem + size(), b.elem);
         b.space = b.elem + size();
         swap(vb, b);
       }
+
+      size_type capacity() const noexcept { return vb.last - vb.elem; }
+
+      void shrink_to_fit() {
+        if (!(vb.last > vb.space)) return;
+
+        vector_base<T, A> tmp (vb.alloc, size());
+        std::uninitialized_copy(vb.elem, vb.space, tmp.elem);
+        swap(vb, tmp);
+      }
+
+      void clear() noexcept { resize(0); }
+
+
+
+
 
       void resize(size_type newsize, const_reference value = T()) {
         reserve(newsize > capacity() && capacity() ? capacity() * 2 : newsize);
@@ -190,8 +266,6 @@ namespace s21 {
         }
         vb.space = vb.elem + newsize;
       }
-
-      void clear() { resize(0); }
 
       void push_back(const T& value) {
         if (capacity() == size())

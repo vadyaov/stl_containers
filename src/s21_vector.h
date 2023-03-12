@@ -49,7 +49,7 @@ namespace s21 {
 
         ~vector_base() { alloc.deallocate(elem, last - elem); }
 
-        friend void swap(vector_base<T, A>& first, vector_base<T, A>& second) {
+        friend void swap_vb(vector_base<T, A>& first, vector_base<T, A>& second) {
           std::swap(first.elem, second.elem);
           std::swap(first.space, second.space);
           std::swap(first.last, second.last);
@@ -60,25 +60,30 @@ namespace s21 {
   class vector {
       vector_base<T, A> vb;
     public:
+      using v_base = vector_base<T, A>;
       using size_type = std::size_t;
-      using value_type = typename std::allocator_traits<A>::value_type;
+      using value_type = T;
       using allocator_type = A;
 
-      using reference = typename A::reference;
-      using const_reference = typename A::const_reference;
+      using reference = T&;
+      using const_reference = const T&;
 
-      using pointer = typename std::allocator_traits<A>::pointer;
-      using const_pointer = typename std::allocator_traits<A>::const_pointer;
+      using pointer = T*;
+      using const_pointer = const T*;
 
       using iterator = value_type*;
+      /* using iterator = Ptrit<value_type, difference_type, pointer, */
+      /*                        reference, pointer, reference>; */
       using const_iterator = const value_type*;
+      /* using iterator = Ptrit<value_type, difference_type, const_pointer, */
+      /*                        const_reference, pointer, reference>; */
 
-      /* using reverse_iterator = iterator; */
-      /* using const_reverse_iterator = const_iterator; */
+      /* using reverse_iterator = std::reverse_iterator<iterator>; */
+      /* using const_reverse_iterator = std::reverse_iterator<const_iterator>; */
 
       using difference_type = std::ptrdiff_t;
 
-/*1*/ vector() : vb{} {}
+/*1*/ vector() : vb() {}
 /*2*/ explicit vector(const A& a) noexcept : vb{a} {} // +
 /*3*/ explicit vector(size_type count, const T& value = T(),
                       const A& a = A()) : vb{a, count}{
@@ -145,7 +150,7 @@ namespace s21 {
 
       vector& operator=(vector&& other) noexcept {
         clear();
-        swap(vb, other.vb);
+        swap_vb(vb, other.vb);
         other.vb.elem = other.vb.space = other.vb.last = nullptr; // idk about this line, did it for zero capacity after swap
         return *this;
       }
@@ -228,16 +233,16 @@ namespace s21 {
       bool empty() const noexcept {return !size();};
 
       size_type size() const noexcept { return vb.space - vb.elem; }
-      /* size_type max_size() const {  ;} */
+
+      size_type max_size() const { return vb.alloc.max_size();}
 
       void reserve(size_type newalloc) {
         if (newalloc <= capacity()) return;
-        /* if (newalloc > max_size()) throw std::length_error("newalloc > max_size()"); */
 
-        vector_base<T, A> b {vb.alloc, newalloc};
+        v_base b {vb.alloc, newalloc};
         std::uninitialized_copy(vb.elem, vb.elem + size(), b.elem);
         b.space = b.elem + size();
-        swap(vb, b);
+        swap_vb(vb, b);
       }
 
       size_type capacity() const noexcept { return vb.last - vb.elem; }
@@ -245,18 +250,85 @@ namespace s21 {
       void shrink_to_fit() {
         if (!(vb.last > vb.space)) return;
 
-        vector_base<T, A> tmp (vb.alloc, size());
+        v_base tmp (vb.alloc, size());
         std::uninitialized_copy(vb.elem, vb.space, tmp.elem);
-        swap(vb, tmp);
+        swap_vb(vb, tmp);
       }
 
       void clear() noexcept { resize(0); }
 
+      // IMPLEMENT THIS AFTER CORRECT ITERATORS
+                // inserts value before pos
+      /* iterator insert(const_iterator pos, const_reference value) { */
+      /* } */
+
+                // inserts value before pos
+      /* iterator insert(const_iterator pos, T&& value) { */
+      /* } */
+
+            //  inserts count copies of the value before pos.
+      /* iterator insert(const_iterator pos, size_type count, const_reference value) { */
+      /* } */
+
+          // inserts elements from range [first, last) before pos. 
+      /* template<class InputIt> */
+      /*   iterator insert(const_iterator pos, InputIt first, InputIt last) { */
+      /*   } */
+
+          // inserts elements from initializer list ilist before pos.
+      /* iterator insert(const_iterator pos, std::initializer_list<T> ilist) { */
+      /* } */
+/* Causes reallocation if the new size() is greater than the old capacity(). */
+/* If the new size() is greater than capacity(), all iterators and references */
+/* are invalidated. Otherwise, only the iterators and references before the insertion */
+/* point remain valid. The end() iterator is also invalidated. */ 
 
 
+      /* template<class... Args> */
+      /*   iterator emplace(const_iterator pos, Args&&... args) { */
+      /*   } */
 
+      // removes the element at pos
+      /* iterator erase(const_iterator pos) { */
+      /* } */
 
-      void resize(size_type newsize, const_reference value = T()) {
+      // removes the elements in the range [first, last)
+      /* iterator erase (const_iterator first, const_iterator last) { */
+      /* } */
+
+      void push_back(const T& value) {
+        if (capacity() == size())
+          reserve(size() ? size() * 2 : 1);
+        vb.alloc.construct(&vb.elem[size()], value);
+        ++vb.space;
+      }
+
+      // code duplication, how to do it correctly ? 
+      void push_back(T&& value) {
+        /* std::cout << "!\n"; */
+        if (capacity() == size())
+          reserve(size() ? size() * 2 : 1);
+        vb.alloc.construct(&vb.elem[size()], value);
+        ++vb.space;
+      }
+
+      /* template<class... Args> */
+      /*   reference emplace_back(Args&&... args); */
+
+      void pop_back() {
+        if (size())
+          vb.alloc.destroy(&vb.elem[size() - 1]);
+        if (vb.space != nullptr)
+          --vb.space;
+      }
+
+      void resize(size_type newsize) {
+        resize(newsize, T());
+      }
+
+      void resize(size_type newsize, const_reference value) {
+        // thow length_error is newsize > max_size()
+        // what to do with -1 ? 
         reserve(newsize > capacity() && capacity() ? capacity() * 2 : newsize);
         if (size() < newsize) {
           std::uninitialized_fill(vb.elem + size(), vb.elem + newsize, value);
@@ -267,18 +339,14 @@ namespace s21 {
         vb.space = vb.elem + newsize;
       }
 
-      void push_back(const T& value) {
-        if (capacity() == size())
-          reserve(size() ? size() * 2 : 1);
-        vb.alloc.construct(&vb.elem[size()], value);
-        ++vb.space;
-      }
-
-      void pop_back() {
-        if (size())
-          vb.alloc.destroy(&vb.elem[size() - 1]);
-        if (vb.space != nullptr)
-          --vb.space;
+      // it can be incorrect, because of:
+      // Если get_allocator() == other.get_allocator(), то она выполняется за
+      // постоянное время, в противном случае она выполняет большое число присвоений
+      // элементов, а конструктор вызывается количество раз, пропорциональное числу
+      // элементов в двух управляемых последовательностях
+      void swap(vector& other) noexcept {
+        swap_vb(vb, other.vb);
+        std::swap(vb.alloc, other.vb.alloc);
       }
 
 

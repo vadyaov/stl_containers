@@ -56,10 +56,6 @@ namespace s21 {
           other.space = nullptr;
           other.last = nullptr;
 
-          /* std::swap(elem, other.elem); */
-          /* std::swap(space, other.space); */
-          /* std::swap(last, other.last); */
-          /* std::swap(alloc, other.alloc); */
           return *this;
         }
 
@@ -88,97 +84,32 @@ namespace s21 {
           iterator() : ptr{nullptr} {}
           explicit iterator(pointer p) : ptr {p} {}
           iterator(const iterator& iter) : ptr{iter.ptr} {}
-          ~iterator() {
-            ptr = nullptr;
-          }
+          ~iterator() { ptr = nullptr; }
 
-          iterator& operator=(const iterator& other) {
-            ptr = other.ptr;
-            return *this;
-          }
+          iterator& operator=(const iterator& other) { ptr = other.ptr; return *this; }
+          bool operator==(const iterator& other) const { return ptr == other.ptr; }
+          bool operator!=(const iterator& other) const { return ptr != other.ptr; }
+          bool operator<(const iterator& other) const { return ptr < other.ptr; }
+          bool operator>(const iterator& other) const { return ptr > other.ptr; }
+          bool operator<=(const iterator& other) const { return ptr <= other.ptr; }
+          bool operator>=(const iterator& other) const { return ptr >= other.ptr; }
 
-          bool operator==(const iterator& other) const {
-            return ptr == other.ptr;
-          }
-          bool operator!=(const iterator& other) const {
-            return ptr != other.ptr;
-          }
-
-          bool operator<(const iterator& other) const {
-            return ptr < other.ptr;
-          }
-
-          bool operator>(const iterator& other) const {
-            return ptr > other.ptr;
-          }
-
-          bool operator<=(const iterator& other) const {
-            return ptr <= other.ptr;
-          }
-
-          bool operator>=(const iterator& other) const {
-            return ptr >= other.ptr;
-          }
-
-          iterator& operator++() {
-            ++ptr;
-            return *this;
-          }
-
-          iterator operator++(int) {
-            iterator tmp = *this;
-            ++ptr;
-            return tmp;
-          }
-
-          iterator& operator--() {
-            --ptr;
-            return *this;
-          }
-
-          iterator operator--(int) {
-            iterator tmp = *this;
-            --ptr;
-            return tmp;
-          }
-
-          iterator& operator+=(size_type n) {
-            ptr += n;
-            return *this;
-          }
-
-          iterator operator+(size_type n) const {
-            iterator tmp = *this;
-            tmp += n;
-            return tmp;
-          }
+          iterator& operator++() { ++ptr; return *this; }
+          iterator operator++(int) { iterator tmp = *this; ++ptr; return tmp; }
+          iterator& operator--() { --ptr; return *this; }
+          iterator operator--(int) { iterator tmp = *this; --ptr; return tmp; }
+          iterator& operator+=(size_type n) { ptr += n; return *this; }
+          iterator operator+(size_type n) const { iterator tmp = *this; tmp += n; return tmp; }
 
           /* friend iterator operator+(size_type, const iterator&); // +- */
 
-          iterator& operator-=(size_type n) {
-            ptr -= n;
-            return *this;
-          }
+          iterator& operator-=(size_type n) { ptr -= n; return *this; }
+          iterator operator-(size_type n) const { iterator tmp = *this; tmp -= n; return tmp; }
+          difference_type operator-(iterator other) { return ptr - other.ptr; }
+          reference operator*() const { return *ptr; }
+          pointer operator->() const { return ptr; }
 
-          iterator operator-(size_type n) const {
-            iterator tmp = *this;
-            tmp -= n;
-            return tmp;
-          }
-
-          difference_type operator-(iterator other) {
-            return ptr - other.ptr;
-          }
-
-          reference operator*() const {
-            return *ptr;
-          }
-
-          pointer operator->() const {
-            return ptr;
-          }
-
-          /* reference operator[](size_type) const; // +- */
+          reference operator[](size_type n) const { return *(ptr + n); }
         private:
           pointer ptr;
       };
@@ -195,89 +126,119 @@ namespace s21 {
           explicit const_iterator(pointer p) : ptr{p} {}
           const_iterator(const const_iterator& other) : ptr{other.ptr} {}
           explicit const_iterator(const iterator& other) : ptr{other.ptr} {}
-          ~const_iterator() {
-            ptr = nullptr;
-          }
+          ~const_iterator() { ptr = nullptr; }
 
-          const_iterator& operator=(const const_iterator& other) {
-            ptr = other.ptr;
-            return *this;
-          }
-
-          bool operator==(const const_iterator& other) const {
-            return ptr == other.ptr;
-          }
-
-          bool operator!=(const const_iterator& other) const {
-            return ptr != other.ptr;
-          }
-
-          bool operator<(const const_iterator& other) const {
-            return ptr < other.ptr;
-          }
-
-          bool operator>(const const_iterator& other) const {
-            return ptr > other.ptr;
-          }
-
+          const_iterator& operator=(const const_iterator& other) { ptr = other.ptr; return *this; }
+          bool operator==(const const_iterator& other) const { return ptr == other.ptr; }
+          bool operator!=(const const_iterator& other) const { return ptr != other.ptr; }
+          bool operator<(const const_iterator& other) const { return ptr < other.ptr; }
+          bool operator>(const const_iterator& other) const { return ptr > other.ptr; }
           bool operator<=(const const_iterator& other) const { return ptr <= other.ptr; }
           bool operator>=(const const_iterator& other) const { return ptr >= other.ptr; }
 
-          const_iterator& operator++() {
-            ++ptr;
-            return *this;
-          }
-
-          const_iterator operator++(int) {
-            const_iterator tmp{*this};
-            ++ptr;
-            return tmp;
-          }
-
-          const_iterator& operator--() {
-            --ptr;
-            return *this;
-          }
-
-          const_iterator operator--(int) {
-            const_iterator tmp{*this};
-            --ptr;
-            return tmp;
-          }
-
-          const_iterator& operator+=(size_type n) {
-            ptr += n;
-            return *this;
-          }
-
-          const_iterator operator+(size_type n) {
-            const_iterator tmp{*this};
-            tmp += n;
-            return tmp;
-          }
+          const_iterator& operator++() { ++ptr; return *this; }
+          const_iterator operator++(int) { const_iterator tmp{*this}; ++ptr; return tmp; }
+          const_iterator& operator--() { --ptr; return *this; }
+          const_iterator operator--(int) { const_iterator tmp{*this}; --ptr; return tmp; }
+          const_iterator& operator+=(size_type n) { ptr += n; return *this; }
+          const_iterator operator+(size_type n) { const_iterator tmp{*this}; tmp += n; return tmp; }
 
           /* friend const_iterator operator+(size_type, const const_iterator&); // +- */
 
-          const_iterator& operator-=(size_type n) {
-            ptr -= n;
-            return *this;
-          }
-
-          const_iterator operator-(size_type n) const {
-            const_iterator tmp{*this};
-            tmp -= n;
-            return tmp;
-          }
-
-          difference_type operator-(const_iterator other) {
-            return ptr - other.ptr;
-          }
-
+          const_iterator& operator-=(size_type n) { ptr -= n; return *this; }
+          const_iterator operator-(size_type n) const { const_iterator tmp{*this}; tmp -= n; return tmp; }
+          difference_type operator-(const_iterator other) { return ptr - other.ptr; }
           reference operator*() const { return *ptr; }
           pointer operator->() const { return ptr; }
+          reference operator[](size_type n ) const { return *(ptr + n); }
+        private:
+          pointer ptr;
+      };
 
+      class reverse_iterator {
+        public:
+          typedef typename A::difference_type difference_type;
+          typedef typename A::value_type value_type;
+          typedef typename A::reference reference;
+          typedef typename A::pointer pointer;
+          typedef std::random_access_iterator_tag iterator_category;
+
+          reverse_iterator() : ptr {nullptr} {}
+          explicit reverse_iterator(pointer p) : ptr{p} {}
+          reverse_iterator(const reverse_iterator& other) : ptr{other.ptr} {}
+          explicit reverse_iterator(const iterator& other) : ptr{other.ptr} {}
+          ~reverse_iterator() {
+            ptr = nullptr;
+          }
+
+          reverse_iterator& operator=(const reverse_iterator& other) { ptr = other.ptr; return *this; }
+
+          bool operator==(const reverse_iterator& other) const { return ptr == other.ptr; }
+          bool operator!=(const reverse_iterator& other) const { return ptr != other.ptr; }
+          bool operator<(const reverse_iterator& other) const { return ptr > other.ptr; }
+          bool operator>(const reverse_iterator& other) const { return ptr < other.ptr; }
+          bool operator<=(const reverse_iterator& other) const { return ptr >= other.ptr; }
+          bool operator>=(const reverse_iterator& other) const { return ptr <= other.ptr; }
+
+          reverse_iterator& operator++() { --ptr; return *this; }
+          reverse_iterator operator++(int) { reverse_iterator tmp{*this}; --ptr; return tmp; }
+          reverse_iterator& operator--() { ++ptr; return *this; }
+          reverse_iterator operator--(int) { reverse_iterator tmp{*this}; ++ptr; return tmp; }
+          reverse_iterator& operator+=(size_type n) { ptr -= n; return *this; }
+          reverse_iterator operator+(size_type n) { reverse_iterator tmp{*this}; tmp += n; return tmp; }
+
+          /* friend reverse_iterator operator+(size_type, const reverse_iterator&); // +- */
+
+          reverse_iterator& operator-=(size_type n) { ptr += n; return *this; }
+          reverse_iterator operator-(size_type n) const { reverse_iterator tmp{*this}; tmp -= n; return tmp; }
+          difference_type operator-(reverse_iterator other) { return other.ptr - ptr; }
+          reference operator*() const { return *ptr; }
+          pointer operator->() const { return ptr; }
           /* reference operator[](size_type) const; // +- */
+        private:
+          pointer ptr;
+      };
 
+      class const_reverse_iterator {
+        public:
+          typedef typename A::difference_type difference_type;
+          typedef typename A::value_type value_type;
+          typedef typename A::const_reference reference;
+          typedef typename A::const_pointer pointer;
+          typedef std::random_access_iterator_tag iterator_category;
+
+          const_reverse_iterator() : ptr {nullptr} {}
+          explicit const_reverse_iterator(pointer p) : ptr{p} {}
+          const_reverse_iterator(const const_reverse_iterator& other) : ptr{other.ptr} {}
+          explicit const_reverse_iterator(const iterator& other) : ptr{other.ptr} {}
+          ~const_reverse_iterator() {
+            ptr = nullptr;
+          }
+
+          const_reverse_iterator& operator=(const const_reverse_iterator& other) { ptr = other.ptr; return *this; }
+
+          bool operator==(const const_reverse_iterator& other) const { return ptr == other.ptr; }
+          bool operator!=(const const_reverse_iterator& other) const { return ptr != other.ptr; }
+          bool operator<(const const_reverse_iterator& other) const { return ptr > other.ptr; }
+          bool operator>(const const_reverse_iterator& other) const { return ptr < other.ptr; }
+          bool operator<=(const const_reverse_iterator& other) const { return ptr >= other.ptr; }
+          bool operator>=(const const_reverse_iterator& other) const { return ptr <= other.ptr; }
+
+          const_reverse_iterator& operator++() { --ptr; return *this; }
+          const_reverse_iterator operator++(int) { const_reverse_iterator tmp{*this}; --ptr; return tmp; }
+          const_reverse_iterator& operator--() { ++ptr; return *this; }
+          const_reverse_iterator operator--(int) { const_reverse_iterator tmp{*this}; ++ptr; return tmp; }
+          const_reverse_iterator& operator+=(size_type n) { ptr -= n; return *this; }
+          const_reverse_iterator operator+(size_type n) { const_reverse_iterator tmp{*this}; tmp += n; return tmp; }
+
+          /* friend const_reverse_iterator operator+(size_type, const const_reverse_iterator&); // +- */
+
+          const_reverse_iterator& operator-=(size_type n) { ptr += n; return *this; }
+          const_reverse_iterator operator-(size_type n) const { const_reverse_iterator tmp{*this}; tmp -= n; return tmp; }
+          difference_type operator-(const_reverse_iterator other) { return other.ptr - ptr; }
+          reference operator*() const { return *ptr; }
+          pointer operator->() const { return ptr; }
+          /* reference operator[](size_type) const; // +- */
         private:
           pointer ptr;
       };
@@ -285,52 +246,42 @@ namespace s21 {
       typedef typename iterator::pointer pointer;
       typedef typename const_iterator::pointer const_pointer;
 
-      typedef std::reverse_iterator<iterator> reverse_iterator;
-      typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+       vector() : vb() {}
+       explicit vector(const A& a) noexcept : vb{a} {}
+       explicit vector(size_type count, const T& value = T(),
+                       const A& a = A()) : vb{a, count}{
+         std::uninitialized_fill(vb.elem, vb.elem + count, value);
+       }
 
-/*1*/ vector() : vb() {}
-/*2*/ explicit vector(const A& a) noexcept : vb{a} {} // +
-/*3*/ explicit vector(size_type count, const T& value = T(),
-                      const A& a = A()) : vb{a, count}{
-        std::uninitialized_fill(vb.elem, vb.elem + count, value);
-      }
-/*4*/ explicit vector(size_type count, const A& a) : vb{a, count} {
-        std::uninitialized_fill(vb.elem, vb.elem + count, value_type());
-      }
-/*5*/ template<class InputIt>
-        vector(InputIt first, InputIt last, const A& alloc = A()) : vb {alloc, static_cast<size_type>(last - first)} {
-          std::uninitialized_copy(first, last, vb.elem);
-        }
+       explicit vector(size_type count, const A& a) : vb{a, count} {
+         std::uninitialized_fill(vb.elem, vb.elem + count, value_type());
+       }
 
-      // Copy constructor. Constructs the container with the copy of the contents of other.
-/*6*/ vector(const vector<value_type, allocator_type>& other) : vb{other.vb.alloc, other.size()} {
-        std::uninitialized_copy(other.begin(), other.end(), vb.elem);
-      }
+       template<class InputIt>
+         vector(InputIt first, InputIt last, const A& alloc = A()) : vb {alloc, static_cast<size_type>(last - first)} {
+           std::uninitialized_copy(first, last, vb.elem);
+         }
 
-      // Constructs the container with the copy of the contents of other, using alloc as the allocator.
-/*7*/ vector(const vector& other, const allocator_type& alloc) : vb{alloc, other.size()} {
-        std::uninitialized_copy(other.begin(), other.end(), vb.elem);
-      }
+       vector(const vector& other) : vb{other.vb.alloc, other.size()} {
+         std::uninitialized_copy(other.begin(), other.end(), vb.elem);
+       }
 
-      // Move constructor. Constructs the container with the contents of other using move semantics.
-      // A is obtained by move-construction from the allocator belonging to other.
-      // After the move, other is guaranteed to be empty().
-/*8*/ vector(vector&& other) noexcept : vb{std::move(other.vb)} {}
+       vector(const vector& other, const allocator_type& alloc) : vb{alloc, other.size()} {
+         std::uninitialized_copy(other.begin(), other.end(), vb.elem);
+       }
 
-/*       // A-extended move constructor. Using alloc as the allocator for the new container, */
-/*       // moving the contents from other; if alloc != other.get_allocator(), this results in an element-wise move. */
-/*       // (In that case, other is not guaranteed to be empty after the move.) */
-/*9*/ vector(vector&& other, const A& alloc) : vb{std::move(other.vb), alloc} {}
+       vector(vector&& other) noexcept : vb{std::move(other.vb)} {}
 
-      // Constructs the container with the contents of the initializer list init.
-/*10*/vector(std::initializer_list<T> init, const A& alloc = A()) : vb {alloc, init.size()} {
-        std::uninitialized_copy(init.begin(), init.end(), vb.elem);
-      }
+       vector(vector&& other, const A& alloc) : vb{std::move(other.vb), alloc} {}
 
-      ~vector() {
-        for (pointer p = vb.elem; p != vb.space; ++p)
-          vb.alloc.destroy(p);
-      }
+       explicit vector(std::initializer_list<T> init, const A& alloc = A()) : vb {alloc, init.size()} {
+         std::uninitialized_copy(init.begin(), init.end(), vb.elem);
+       }
+
+       ~vector() {
+         for (pointer p = vb.elem; p != vb.space; ++p)
+           vb.alloc.destroy(p);
+       }
 
       vector& operator=(const vector& other) {
         if (capacity() < other.size()) {
@@ -364,13 +315,13 @@ namespace s21 {
       }
 
       vector& operator=(std::initializer_list<T> ilist) {
-        vector<T, A> tmp{ilist};
+        vector tmp{ilist};
         *this = tmp;
         return *this;
       }
 
       void assign(size_type count, const T& value) {
-        vector tmp {count, value, vb.alloc};
+        vector tmp {count, value};
         *this = tmp;
       }
 
@@ -395,19 +346,15 @@ namespace s21 {
       }
 
       reference operator[](size_type pos) { return vb.elem[pos]; }
-
       const_reference operator[](size_type pos) const { return vb.elem[pos]; }
 
-      reference front() { return *vb.elem; }
+      reference front() { return iterator(vb.elem)[0]; }
+      const_reference front() const { return const_iterator(vb.elem)[0]; }
 
-      const reference front() const { return *vb.elem; }
-
-      reference back() { return *(vb.space - 1); }
-
-      const_reference back() const { return *(vb.space - 1); }
+      reference back() { return iterator(vb.space - 1)[size()]; }
+      const_reference back() const { return const_iterator(vb.space - 1)[size()]; }
 
       pointer data() noexcept { return vb.elem; }
-
       const_pointer data() const noexcept { return vb.elem; }
 
       iterator begin() noexcept { return iterator(vb.elem); }
@@ -418,26 +365,17 @@ namespace s21 {
       const_iterator end() const noexcept { return const_iterator(vb.space); }
       const_iterator cend() const noexcept { return const_iterator(vb.space); }
 
-      /* iterator rbegin() noexcept { return vb.space - 1; } */
+      reverse_iterator rbegin() noexcept { return reverse_iterator(vb.space - 1); }
+      const_reverse_iterator rbegin() const { return const_reverse_iterator(vb.space - 1); }
+      const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(vb.space - 1); }
 
-      /* const_iterator rbegin() const { return vb.space - 1; } */
-
-      /* const_iterator crbegin() const noexcept { return vb.space - 1; } */
-
-      /* iterator rend() noexcept { return vb.elem - 1; } */
-
-      /* const_iterator rend() const { return vb.elem - 1; } */
-
-      /* const_iterator crend() const noexcept { return vb.elem - 1; } */
-      // REWORK ITERATORS //
-
-
-
+      reverse_iterator rend() noexcept { return reverse_iterator(vb.elem - 1); }
+      const_reverse_iterator rend() const { return const_reverse_iterator(vb.elem - 1); }
+      const_reverse_iterator crend() const noexcept { return const_reverse_iterator(vb.elem - 1); }
 
       bool empty() const noexcept {return !size();};
 
       size_type size() const noexcept { return vb.space - vb.elem; }
-
       size_type max_size() const { return vb.alloc.max_size();}
 
       void reserve(size_type newalloc) {

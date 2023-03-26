@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <iterator>
 #include <iostream>
+#include <cstring>
 
 namespace s21 {
 
@@ -100,6 +101,10 @@ namespace s21 {
           iterator operator--(int) { iterator tmp = *this; --ptr; return tmp; }
           iterator& operator+=(size_type n) { ptr += n; return *this; }
           iterator operator+(size_type n) const { iterator tmp = *this; tmp += n; return tmp; }
+          iterator operator+(const iterator& other) const { 
+            ptrdiff_t diff = other.ptr - ptr;
+            return iterator(ptr + diff); 
+          }
 
           /* friend iterator operator+(size_type, const iterator&); // +- */
 
@@ -401,7 +406,7 @@ namespace s21 {
 
       // IMPLEMENT THIS AFTER CORRECT ITERATORS
                 // inserts value before pos
-      /* iterator insert(const_iterator pos, const_reference value) { */
+      /* iterator insert(iterator pos, const_reference value) { */
       /* } */
 
                 // inserts value before pos
@@ -409,8 +414,29 @@ namespace s21 {
       /* } */
 
             //  inserts count copies of the value before pos.
-      /* iterator insert(const_iterator pos, size_type count, const_reference value) { */
-      /* } */
+      iterator insert(iterator pos, size_type count, const_reference value) {
+        if (count == 0) return pos;
+        if (pos >= end()) throw std::out_of_range("position is out of range");
+
+        size_type index = pos - begin();
+
+        if (size() + count > capacity()) {
+          size_type new_cap = std::max(2 * capacity(), size() + count);
+          vector_base<T, A> new_vb (vb.alloc, new_cap);
+          /* pointer new_elem = vb.alloc.allocate(new_cap); */
+          new_vb.space = std::uninitialized_copy(begin(), begin() + pos, new_vb.elem);
+          std::uninitialized_fill_n(new_vb.space, count, value);
+          std::uninitialized_copy(begin() + pos, end(), new_vb.space + count);
+          new_vb.space += count + (end() - pos);
+          new_vb.last = new_vb.elem + new_cap;
+          std::swap(vb, new_vb);
+        } else {
+          /* std::uninitialized_move_backward(begin() + pos, end(), end() + count); */
+          /* std::uninitialized_fill_n(begin() + pos, count, value); */
+          /* vb.space += count; */
+        }
+        return iterator(begin() + index);
+     }
 
           // inserts elements from range [first, last) before pos. 
       /* template<class InputIt> */

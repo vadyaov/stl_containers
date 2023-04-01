@@ -404,26 +404,22 @@ namespace s21 {
 
       void clear() noexcept { resize(0); }
 
-      // IMPLEMENT THIS AFTER CORRECT ITERATORS
-                // inserts value before pos
-      /* iterator insert(iterator pos, const_reference value) { */
-      /* } */
+      iterator insert(iterator pos, const_reference value) { return insert(pos, 1, value); }
 
                 // inserts value before pos
       /* iterator insert(const_iterator pos, T&& value) { */
       /* } */
 
-            //  inserts count copies of the value before pos.
       iterator insert(iterator pos, size_type count, const_reference value) {
         if (count == 0) return pos;
         if (pos >= end()) throw std::out_of_range("position is out of range");
+        if (size() + count > max_size()) throw std::length_error("size is too large");
 
-        size_type index = pos - begin();
+        difference_type index = pos - begin();
 
         if (size() + count > capacity()) {
           size_type new_cap = std::max(2 * capacity(), size() + count);
           vector_base<T, A> new_vb (vb.alloc, new_cap);
-          /* pointer new_elem = vb.alloc.allocate(new_cap); */
           new_vb.space = std::uninitialized_copy(begin(), begin() + pos, new_vb.elem);
           std::uninitialized_fill_n(new_vb.space, count, value);
           std::uninitialized_copy(begin() + pos, end(), new_vb.space + count);
@@ -431,17 +427,39 @@ namespace s21 {
           new_vb.last = new_vb.elem + new_cap;
           std::swap(vb, new_vb);
         } else {
-          /* std::uninitialized_move_backward(begin() + pos, end(), end() + count); */
-          /* std::uninitialized_fill_n(begin() + pos, count, value); */
-          /* vb.space += count; */
+          std::move_backward(begin() + index, end(), end() + count);
+          std::uninitialized_fill_n(begin() + pos, count, value);
+          vb.space += count;
         }
-        return iterator(begin() + index);
+        return begin() + index;
      }
 
-          // inserts elements from range [first, last) before pos. 
-      /* template<class InputIt> */
-      /*   iterator insert(const_iterator pos, InputIt first, InputIt last) { */
-      /*   } */
+        iterator insert(iterator pos, iterator first, iterator last) {
+          if (first >= last) return pos;
+          if (pos >= end()) throw std::out_of_range("position is out of range");
+          if (size() + (last - first) > max_size()) throw std::length_error("size is too large");
+
+          difference_type sz = last - first;
+          difference_type index = pos - begin();
+
+          if (size() + sz > capacity()) {
+            size_type new_cap = std::max(2 * capacity(), size() + sz);
+            vector_base<T, A> new_vb (vb.alloc, new_cap);
+            std::uninitialized_copy(vb.elem, vb.elem + index, new_vb.elem);
+            std::uninitialized_copy(first, last, new_vb.elem + index);
+            std::uninitialized_copy(vb.elem + index, vb.space, new_vb.elem + index + sz);
+            new_vb.space = new_vb.elem + size() + sz;
+            for (pointer p = vb.elem; p != vb.space; ++p)
+              vb.alloc.destroy(p);
+            vb.alloc.deallocate(vb.elem, vb.last - vb.elem);
+            vb = std::move(new_vb);
+          } else {
+            std::move_backward(begin() + index, end(), end() + sz);
+            std::uninitialized_copy(first, last, begin() + pos);
+            vb.space += sz;
+          }
+          return begin() + index;
+        }
 
           // inserts elements from initializer list ilist before pos.
       /* iterator insert(const_iterator pos, std::initializer_list<T> ilist) { */

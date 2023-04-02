@@ -267,6 +267,7 @@ namespace s21 {
        ~vector() {
          for (pointer p = vb.elem; p != vb.space; ++p)
            vb.alloc.destroy(p);
+         vb.space = vb.elem;
        }
 
       vector& operator=(const vector& other) {
@@ -389,7 +390,7 @@ namespace s21 {
 
       iterator insert(iterator pos, size_type count, const_reference value) {
         if (count == 0) return pos;
-        if (pos >= end()) throw std::out_of_range("position is out of range");
+        if (pos > end() || pos < begin()) throw std::out_of_range("position is out of range");
         if (size() + count > max_size()) throw std::length_error("size is too large");
 
         const difference_type index = pos - begin();
@@ -397,15 +398,15 @@ namespace s21 {
         if (size() + count > capacity()) {
           size_type new_cap = std::max(2 * capacity(), size() + count);
           vector_base<T, A> new_vb (vb.alloc, new_cap);
-          new_vb.space = std::uninitialized_copy(begin(), /*begin() +*/ pos, new_vb.elem);
+          new_vb.space = std::uninitialized_copy(begin(), pos, new_vb.elem);
           std::uninitialized_fill_n(new_vb.space, count, value);
-          std::uninitialized_copy(/*begin() + */pos, end(), new_vb.space + count);
+          std::uninitialized_copy(pos, end(), new_vb.space + count);
           new_vb.space += count + (end() - pos);
           new_vb.last = new_vb.elem + new_cap;
           std::swap(vb, new_vb);
         } else {
           std::move_backward(begin() + index, end(), end() + count);
-          std::uninitialized_fill_n(/*begin() + */pos, count, value);
+          std::uninitialized_fill_n(pos, count, value);
           vb.space += count;
         }
         return begin() + index;
@@ -413,7 +414,7 @@ namespace s21 {
 
       iterator insert(iterator pos, iterator first, iterator last) {
         if (first >= last) return pos;
-        if (pos >= end()) throw std::out_of_range("position is out of range");
+        if (pos > end() || pos < begin()) throw std::out_of_range("position is out of range");
         if (size() + (last - first) > max_size()) throw std::length_error("size is too large");
 
         const difference_type sz = last - first;
@@ -432,7 +433,7 @@ namespace s21 {
           vb = std::move(new_vb);
         } else {
           std::move_backward(begin() + index, end(), end() + sz);
-          std::uninitialized_copy(first, last, /*begin() + */pos);
+          std::uninitialized_copy(first, last, pos);
           vb.space += sz;
         }
         return begin() + index;
@@ -462,17 +463,12 @@ namespace s21 {
         const difference_type index = pos - begin();
         vb.alloc.destroy(vb.elem + index);
         for (auto it = pos; it < end() - 1; ++it)
-          vb.alloc.construct(it.operator->(), *(it + 1));
+          vb.alloc.construct(std::addressof(*it), *(it + 1));
         vb.alloc.destroy(vb.space - 1);
         vb.space--;
         return begin() + index;
       }
 
-      // 1 2 3 4 5 6 7 8
-      // 1 . . . 5 6 7 8
-      //   ^
-      // 1 5 6 7 8 . . .
-      // removes the elements in the range [first, last)
       iterator erase (iterator first, iterator last) {
         if (first >= last) throw std::length_error("incorrect range [first; last)");
         if (first >= end() || last > end() || first < begin()) throw std::out_of_range("out_of_range in erase()");
@@ -483,7 +479,7 @@ namespace s21 {
         for (iterator it = first; it < last; ++it)
           vb.alloc.destroy(it.operator->());
         for (iterator it = first; it < last && it + sz < end(); ++it)
-          vb.alloc.construct(it.operator->(), *(it + sz));
+          vb.alloc.construct(std::addressof(*it), *(it + sz));
         for (iterator it = last; it + sz < end(); ++it)
           *(it - sz) = std::move(*it);
         for (pointer p = vb.space - sz; p < vb.space; ++p)
@@ -532,6 +528,14 @@ namespace s21 {
 
       void swap(vector& other) noexcept {std::swap(vb, other.vb);}
   };
+
+  template<class T, class A>
+  bool operator==(const vector<T, A>& a, const vector<T, A>& b) {
+    if (a.size() != b.size()) return false;
+    for (typename vector<T, A>::const_iterator i = a.begin(), j = b.begin(); i != a.end(); ++i, ++j)
+      if (!(*i == *j)) return false;
+    return true;
+  }
 
 } // namespace s21
 

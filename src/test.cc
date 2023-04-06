@@ -12,12 +12,10 @@ int main() {
 
   /* std::cout << *k << " " << *l << " " << *(k + l); */
 
-  a.erase(a.end() - 1);
-
   std::cout << "a.size = " << a.size() << std::endl;
   std::cout << "a.capacity = " << a.capacity() << std::endl;
-  for (const auto i : a)
-    std::cout << i << " ";
+  for (auto i = a.begin(); i != a.end(); ++i)
+    std::cout << *i << " ";
   std::cout << std::endl;
   /* a.reserve(30); */
 

@@ -33,9 +33,205 @@ namespace s21 {
         typedef typename A::size_type size_type;
         typedef typename A::template rebind<list_node<T, A>>::other NodeAllocator;
 
-        typedef list_node<T, A> node;
+        /* typedef list_node<T, A> node; */
         typedef list_node<T, A>* node_pointer;
 
+        class iterator {
+         public:
+          typedef typename A::difference_type difference_type;
+          typedef typename A::value_type value_type;
+          typedef typename A::reference reference;
+          typedef typename A::pointer pointer;
+          typedef std::bidirectional_iterator_tag iterator_category;
+
+          iterator() : ptr{nullptr} {}
+          explicit iterator(node_pointer p) : ptr{p} {}
+          iterator(const iterator& iter) : ptr{iter.ptr} {}
+          ~iterator() { ptr = nullptr; }
+
+          iterator& operator=(const iterator& other) {
+            ptr = other.ptr;
+            return *this;
+          }
+
+          bool operator==(const iterator& other) const { return ptr == other.ptr; }
+          bool operator!=(const iterator& other) const { return ptr != other.ptr; }
+
+          iterator& operator++() {
+            ptr = ptr->next;
+            return *this;
+          }
+
+          iterator operator++(int) {
+            iterator tmp = *this;
+            ptr = ptr->next;
+            return tmp;
+          }
+
+          iterator& operator--() {
+            ptr = ptr->prev;
+            return *this;
+          }
+
+          iterator operator--(int) {
+            iterator tmp = *this;
+            ptr = ptr->prev;
+            return tmp;
+          }
+
+          reference operator*() const { return ptr->key; }
+
+         private:
+          node_pointer ptr;
+        };
+
+        class const_iterator {
+         public:
+          typedef typename A::difference_type difference_type;
+          typedef typename A::value_type value_type;
+          typedef typename A::const_reference reference;
+          typedef typename A::const_pointer pointer;
+          typedef std::bidirectional_iterator_tag iterator_category;
+
+
+          const_iterator() : ptr{nullptr} {}
+          explicit const_iterator(node_pointer p) : ptr{p} {}
+          const_iterator(const const_iterator& iter) : ptr{iter.ptr} {}
+          ~const_iterator() { ptr = nullptr; }
+
+          const_iterator& operator=(const const_iterator& other) {
+            ptr = other.ptr;
+            return *this;
+          }
+
+          bool operator==(const const_iterator& other) const { return ptr == other.ptr; }
+          bool operator!=(const const_iterator& other) const { return ptr != other.ptr; }
+
+          const_iterator& operator++() {
+            ptr = ptr->next;
+            return *this;
+          }
+
+          const_iterator operator++(int) {
+            const_iterator tmp = *this;
+            ptr = ptr->next;
+            return tmp;
+          }
+
+          const_iterator& operator--() {
+            ptr = ptr->prev;
+            return *this;
+          }
+
+          const_iterator operator--(int) {
+            const_iterator tmp = *this;
+            ptr = ptr->prev;
+            return tmp;
+          }
+
+          reference operator*() const { return ptr->key; }
+
+         private:
+          node_pointer ptr;
+        };
+
+        class reverse_iterator {
+         public:
+          typedef typename A::difference_type difference_type;
+          typedef typename A::value_type value_type;
+          typedef typename A::reference reference;
+          typedef typename A::pointer pointer;
+          typedef std::bidirectional_iterator_tag iterator_category;
+
+          reverse_iterator() : ptr{nullptr} {}
+          explicit reverse_iterator(node_pointer p) : ptr{p} {}
+          reverse_iterator(const reverse_iterator& iter) : ptr{iter.ptr} {}
+          ~reverse_iterator() { ptr = nullptr; }
+
+          reverse_iterator& operator=(const reverse_iterator& other) {
+            ptr = other.ptr;
+            return *this;
+          }
+
+          bool operator==(const reverse_iterator& other) const { return ptr == other.ptr; }
+          bool operator!=(const reverse_iterator& other) const { return ptr != other.ptr; }
+
+          reverse_iterator& operator++() {
+            ptr = ptr->prev;
+            return *this;
+          }
+
+          reverse_iterator operator++(int) {
+            reverse_iterator tmp = *this;
+            ptr = ptr->prev;
+            return tmp;
+          }
+
+          reverse_iterator& operator--() {
+            ptr = ptr->next;
+            return *this;
+          }
+
+          reverse_iterator operator--(int) {
+            reverse_iterator tmp = *this;
+            ptr = ptr->next;
+            return tmp;
+          }
+
+          reference operator*() const { return ptr->key; }
+
+         private:
+          node_pointer ptr;
+        };
+
+        class const_reverse_iterator {
+         public:
+          typedef typename A::difference_type difference_type;
+          typedef typename A::value_type value_type;
+          typedef typename A::const_reference reference;
+          typedef typename A::const_pointer pointer;
+          typedef std::bidirectional_iterator_tag iterator_category;
+
+          const_reverse_iterator() : ptr{nullptr} {}
+          explicit const_reverse_iterator(node_pointer p) : ptr{p} {}
+          const_reverse_iterator(const const_reverse_iterator& iter) : ptr{iter.ptr} {}
+          ~const_reverse_iterator() { ptr = nullptr; }
+
+          const_reverse_iterator& operator=(const const_reverse_iterator& other) {
+            ptr = other.ptr;
+            return *this;
+          }
+
+          bool operator==(const const_reverse_iterator& other) const { return ptr == other.ptr; }
+          bool operator!=(const const_reverse_iterator& other) const { return ptr != other.ptr; }
+
+          const_reverse_iterator& operator++() {
+            ptr = ptr->prev;
+            return *this;
+          }
+
+          const_reverse_iterator operator++(int) {
+            const_reverse_iterator tmp = *this;
+            ptr = ptr->prev;
+            return tmp;
+          }
+
+          const_reverse_iterator& operator--() {
+            ptr = ptr->next;
+            return *this;
+          }
+
+          const_reverse_iterator operator--(int) {
+            const_reverse_iterator tmp = *this;
+            ptr = ptr->next;
+            return tmp;
+          }
+
+          reference operator*() const { return ptr->key; }
+
+         private:
+          node_pointer ptr;
+        };
 
         list() : list(A()) {}
         explicit list( const A& alloc ) : head{nullptr}, tail{nullptr}, allocator{alloc} {}
@@ -56,7 +252,6 @@ namespace s21 {
             }
 
           }
-
           sz = count;
         }
 
@@ -76,7 +271,6 @@ namespace s21 {
               tail->next = newNode;
               tail = newNode;
             }
-
             sz = last - first;
           }
 
@@ -98,20 +292,27 @@ namespace s21 {
           }
         }
 
-        /* list& operator=(const list& other) { */
-        /* } */
+        list& operator=(const list& other) {
+          if (this == &other) return *this;
+          list tmp{other};
+          std::swap(*this, tmp);
+          return *this;
+        }
 
-        /* list(list&& other) noexcept { */
-        /* } */
+        list(list&& other) noexcept : list(other, other.allocator) {}
 
-        /* list(list&& other, const A& alloc) noexcept { */
-        /* } */
+        list(list&& other, const A& alloc) noexcept : head{other.head},
+                    tail{other.tail}, sz{other.sz}, allocator{alloc}{
+          other.head = other.tail = nullptr;
+        }
 
-        /* list& operator=(list&& other) { */
-        /* } */
+        list& operator=(list&& other) {
+          std::swap(*this, other);
+          return *this;
+        }
 
-        /* list( std::initializer_list<T> init, const A& alloc = A() ) { */
-        /* } */
+        explicit list( std::initializer_list<T> init, const A& alloc = A() ) :
+                                        list(init.begin(), init.end(), alloc) {}
 
         ~list() {
           // think about how to do it better
@@ -121,55 +322,65 @@ namespace s21 {
           if (head) allo.deallocate(head, 1);
         }
 
-        /* list& operator=( std::initializer_list<T> ilist ) { */
-        /* } */
+        list& operator=( std::initializer_list<T> ilist ) {
+          list tmp{ilist};
+          std::swap(*this, tmp);
+          return *this;
+        }
 
-        /* void assign( size_type count, const T& value) {} */
+        void assign( size_type count, const T& value) {
+          list tmp{count, value};
+          *this = tmp;
+        }
 
-        /* template< class InputIt > */
-        /*   void assign( InputIt first, InputIt last ) {} */
+        template< class InputIt >
+          void assign( InputIt first, InputIt last ) {
+            list tmp{first, last};
+            *this = tmp;
+          }
 
-        /* void assign( std::initializer_list<T> ilist ) {} */
+        void assign( std::initializer_list<T> ilist ) {
+          list tmp{ilist};
+          *this = tmp;
+        }
 
-        /* allocator_type get_allocator() const noexcept {} */
+        allocator_type get_allocator() const noexcept { return allocator; }
 
-        /* /1* Element access *1/ */
+        /* Element access */
 
-        /* reference front() {} */
-        /* const_reference front() {} */
+        reference front() { return head->key; }
+        const_reference front() const { return head->key; }
 
-        /* reference back() {} */
-        /* const_reference back() {} */
+        reference back() { return tail->key; }
+        const_reference back() const { return tail->key; }
 
-        /* /1* Iterators *1/ */
+        /* Iterators */
 
-        /* iterator begin() noexcept {} */
-        /* const_iterator begin() const noexcept {} */
-        /* const_iterator cbegin() const noexcept {} */
+        iterator begin() noexcept { return iterator{head}; }
+        const_iterator begin() const noexcept { return const_iterator(head); }
+        const_iterator cbegin() const noexcept { return const_iterator(head); }
 
-        /* iterator end() noexcept {} */
-        /* const_iterator end() const noexcept {} */
-        /* const_iterator cend() const noexcept {} */
+        iterator end() noexcept { return iterator{nullptr}; }
+        const_iterator end() const noexcept { return const_iterator(nullptr); }
+        const_iterator cend() const noexcept { return const_iterator(nullptr); }
 
-        /* reverse_iterator rbegin() noexcept {} */
-        /* const_reverse_iterator rbegin() const noexcept {} */
-        /* const_reverse_iterator crbegin() const noexcept {} */
+        reverse_iterator rbegin() noexcept { return reverse_iterator(tail); }
+        const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(tail); }
+        const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(tail); }
 
-        /* reverse_iterator rend() noexcept {} */
-        /* const_reverse_iterator rend() const noexcept {} */
-        /* const_reverse_iterator crend() const noexcept {} */
+        reverse_iterator rend() noexcept { return reverse_iterator(nullptr); }
+        const_reverse_iterator rend() const noexcept { return const_reverse_iterator(nullptr); }
+        const_reverse_iterator crend() const noexcept { return const_reverse_iterator(nullptr); }
 
-        /* /1* Capacity *1/ */
+        /* Capacity */
 
-        /* bool empty() const noexcept {} */
-
+        bool empty() const noexcept { return size() == 0; }
         size_type size() const noexcept { return sz; }
+        size_type max_size() const noexcept { return allo.max_size(); }
 
-        /* size_type max_size() const noexcept {} */
+        /* Modifiers */
 
-        /* /1* Modifiers *1/ */
-
-        /* void clear() noexcept {} */
+        void clear() noexcept { resize(0); }
 
         /* iterator insert ( const_iterator pos, const T& value ) {} */
         /* iterator insert ( const_iterator pos, T&& value ) {} */
@@ -184,7 +395,10 @@ namespace s21 {
         /* iterator erase ( const_iterator pos ) {} */
         /* iterator erase ( const_iterator first. const_iterator last ) {} */
 
-        /* void push_back( const T& value ); */
+        // implement this and then use push_back in other methods for better readability!
+        void push_back( const T& value ) {
+        }
+
         /* void push_back( T&& value ); */
 
         /* template< class... Args > */
@@ -200,8 +414,28 @@ namespace s21 {
 
         /* void pop_front() {} */
 
-        /* void resize( size_type count ) {} */
-        /* void resize( size_type count, const T& value ) {} */
+        void resize( size_type count ) { resize(count, T()); }
+
+        void resize( size_type count, const T& value ) {
+          if (sz == count) return;
+          if (count > sz) {
+            while (sz != count) {
+              node_pointer newNode = allo.allocate(1);
+              tail->next = newNode;
+              newNode->prev = tail;
+              newNode->next = nullptr;
+              newNode->key = value;
+              tail = newNode;
+              sz++;
+            }
+          } else {
+            node_pointer tmp = tail, pre = tmp->prev;
+            for (; sz != count; tmp = pre, pre = tmp ? tmp->prev : nullptr, --sz)
+              allo.deallocate(tmp, 1);
+            tail = tmp;
+            if (sz == 0) head = tail;
+          }
+        }
 
         /* void swap( list& other ) noexcept {} */
 
@@ -223,18 +457,6 @@ namespace s21 {
         /* void unique() {} */
 
         /* void sort() {} */
-
-        void printList() {
-          std::cout << "HEAD:";
-          /* std::cout << head << std::endl; */
-          list_node<T, A>* tmp = head;
-          while (tmp != tail) {
-            std::cout << tmp->key << std::endl;
-            tmp = tmp->next;
-          }
-          std::cout << "TAIL:";
-          std::cout << tmp->key << std::endl;
-        }
 
       private:
         list_node<T, A>* head;

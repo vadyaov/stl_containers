@@ -7,19 +7,11 @@
 namespace s21 {
 
   template<typename T, typename A = std::allocator<T>>
-    class list_node {
-      public:
+    struct list_node {
         list_node* prev;
         list_node* next;
         T key;
-
-        list_node() : prev{nullptr}, next{nullptr}, key{T()} {}
-        explicit list_node(const T& val) : prev{nullptr}, next{nullptr}, key{val} {}
-
-        list_node(const list_node* pr, const list_node* nx, const T& val) :
-                 prev{pr}, next{nx}, key{val} {std::cout << "i'm here!\b";}
-        list_node(const list_node* pr, const list_node* nx, T&& val) :
-                 prev{pr}, next{nx}, key{val} {}
+        explicit list_node(const T& val, list_node* p = nullptr, list_node* n = nullptr) : prev{p}, next{n}, key{val} {}
     };
 
   template<typename T, typename A = std::allocator<T>>
@@ -234,62 +226,22 @@ namespace s21 {
         };
 
         list() : list(A()) {}
-        explicit list( const A& alloc ) : head{nullptr}, tail{nullptr}, allocator{alloc} {}
+        explicit list( const A& alloc ) : head{nullptr}, tail{nullptr}, sz{0}, allocator{alloc} {}
         explicit list( size_type count, const T& value, const A& alloc = A() ) :
-                       head{nullptr}, tail{nullptr}, allocator{alloc} {
-          if (count != 0) {
-            // mb it should be in private for destructor... or not...
-            head = tail = allo.allocate(1);
-            allo.construct(head, value);
-
-            for (size_type i = 1; i < count; ++i) {
-              node_pointer newNode = allo.allocate(1);
-              allo.construct(newNode, value);
-              newNode->prev = tail;
-              newNode->next = nullptr;
-              tail->next = newNode;
-              tail = newNode;
-            }
-
-          }
-          sz = count;
+                       head{nullptr}, tail{nullptr}, sz{0}, allocator{alloc} {
+          if (count != 0)
+            for (size_type i = 0; i < count; ++i)
+              push_back(value);
         }
 
         explicit list( size_type count, const A& alloc = A() ) : list(count, T(), alloc) {}
 
-        template< class InputIt >
-          list( InputIt first, InputIt last, const A& alloc ) : list(alloc) {
-            if (!(last > first)) throw std::length_error("last <= first");
-            head = tail = allo.allocate(1);
-            allo.construct(head, *first);
-
-            for (InputIt i = first + 1; i < last; ++i) {
-              node_pointer newNode = allo.allocate(1);
-              allo.construct(newNode, *i);
-              newNode->prev = tail;
-              newNode->next = nullptr;
-              tail->next = newNode;
-              tail = newNode;
-            }
-            sz = last - first;
-          }
-
         list(const list& other) : list(other, other.allocator) {}
 
         list(const list& other, const A& alloc) : sz {other.sz}, allocator{alloc} {
-          if (sz != 0) {
-            head = tail = allo.allocate(1);
-            allo.construct(head, other.head->key);
-
-            for(node_pointer i = other.head->next; i != nullptr; i = i->next) {
-              node_pointer newNode = allo.allocate(1);
-              allo.construct(newNode, i->key);
-              newNode->prev = tail;
-              newNode->next = nullptr;
-              tail->next = newNode;
-              tail = newNode;
-            }
-          }
+          if (!(sz == 0))
+            for(node_pointer i = other.head; i != nullptr; i = i->next)
+              push_back(i->key);
         }
 
         list& operator=(const list& other) {
@@ -311,16 +263,18 @@ namespace s21 {
           return *this;
         }
 
+template <typename InputIt, typename = typename std::enable_if<std::is_base_of<std::input_iterator_tag, typename std::iterator_traits<InputIt>::iterator_category>::value>::type>
+          list( InputIt first, InputIt last ) : list() {
+            if (!(last > first)) throw std::length_error("last <= first");
+
+            for (InputIt i = first; i < last; ++i)
+              push_back(*i);
+          }
+
         explicit list( std::initializer_list<T> init, const A& alloc = A() ) :
                                         list(init.begin(), init.end(), alloc) {}
 
-        ~list() {
-          // think about how to do it better
-          if (tail)
-            for (node_pointer tmp = tail, pre = tmp->prev; tmp != head; tmp = pre, pre = tmp->prev)
-              allo.deallocate(tmp, 1);
-          if (head) allo.deallocate(head, 1);
-        }
+        ~list() { dealloc(0); }
 
         list& operator=( std::initializer_list<T> ilist ) {
           list tmp{ilist};
@@ -333,10 +287,10 @@ namespace s21 {
           *this = tmp;
         }
 
-        template< class InputIt >
+template <typename InputIt, typename = typename std::enable_if<std::is_base_of<std::input_iterator_tag, typename std::iterator_traits<InputIt>::iterator_category>::value>::type>
           void assign( InputIt first, InputIt last ) {
             list tmp{first, last};
-            *this = tmp;
+            std::swap(*this, tmp);
           }
 
         void assign( std::initializer_list<T> ilist ) {
@@ -395,51 +349,82 @@ namespace s21 {
         /* iterator erase ( const_iterator pos ) {} */
         /* iterator erase ( const_iterator first. const_iterator last ) {} */
 
-        // implement this and then use push_back in other methods for better readability!
         void push_back( const T& value ) {
+          node_pointer newNode = allo.allocate(1);
+          newNode->key = value;
+          newNode->prev = tail;
+          newNode->next = nullptr;
+          if (tail) tail->next = newNode;
+          tail = newNode;
+          if (head == nullptr) head = tail;
+          sz++;
         }
 
-        /* void push_back( T&& value ); */
+        void push_back( T&& value ) {
+          node_pointer newNode = allo.allocate(1);
+          newNode->key = std::move(value);
+          newNode->prev = tail;
+          newNode->next = nullptr;
+          if (tail) tail->next = newNode;
+          tail = newNode;
+          if (head == nullptr) head = tail;
+          sz++;
+        }
 
         /* template< class... Args > */
         /*   reference emplace_back( Args&&... args ) {} */
 
-        /* void pop_back() {} */
+        void pop_back() {
+          dealloc(size() - 1);
+        }
 
-        /* void push_front( const T& value ) {} */
-        /* void push_front( T&& value ) {} */
+        void push_front( const T& value ) {
+          node_pointer newNode = allo.allocate(1);
+          newNode->key = value;
+          newNode->prev = nullptr;
+          newNode->next = head;
+          if (head) head->prev = newNode;
+          head = newNode;
+          if (tail == nullptr) tail = head;
+          sz++;
+        }
+
+        void push_front( T&& value ) {
+          node_pointer newNode = allo.allocate(1);
+          newNode->key = std::move(value);
+          newNode->prev = nullptr;
+          newNode->next = head;
+          if (head) head->prev = newNode;
+          head = newNode;
+          if (tail == nullptr) tail = head;
+          sz++;
+        }
 
         /* template< class... Args > */
         /*   reference emplace_front( Args&&... args ) {} */
 
-        /* void pop_front() {} */
+        void pop_front() {
+          node_pointer ptr = head;
+          head = head->next;
+          head->prev = nullptr;
+          allo.deallocate(ptr, 1);
+          --sz;
+        }
 
         void resize( size_type count ) { resize(count, T()); }
 
         void resize( size_type count, const T& value ) {
           if (sz == count) return;
-          if (count > sz) {
-            while (sz != count) {
-              node_pointer newNode = allo.allocate(1);
-              tail->next = newNode;
-              newNode->prev = tail;
-              newNode->next = nullptr;
-              newNode->key = value;
-              tail = newNode;
-              sz++;
-            }
-          } else {
-            node_pointer tmp = tail, pre = tmp->prev;
-            for (; sz != count; tmp = pre, pre = tmp ? tmp->prev : nullptr, --sz)
-              allo.deallocate(tmp, 1);
-            tail = tmp;
-            if (sz == 0) head = tail;
-          }
+          if (count > sz)
+            while (sz != count)
+              push_back(value);
+          else
+            dealloc(count);
         }
 
         /* void swap( list& other ) noexcept {} */
 
-        /* /1* Operations *1/ */
+        /* Operations */
 
         /* void merge( list&& other ) {} */
         /* template< class Compare > */
@@ -464,6 +449,16 @@ namespace s21 {
         size_type sz;
         A allocator;
         NodeAllocator allo;
+        void dealloc(size_type count) {
+          if (tail && sz > count) {
+            node_pointer tmp = tail, pre = tmp->prev;
+            for (; sz != count; tmp = pre, pre = tmp ? tmp->prev : nullptr, --sz)
+              allo.deallocate(tmp, 1);
+            if (tmp) tmp->next = nullptr;
+            tail = tmp;
+            if (sz == 0) head = tail;
+          }
+        }
     };
 } // namespace s21
 

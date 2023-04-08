@@ -682,7 +682,7 @@ class vector {
 
   void push_back(T&& value) {
     if (capacity() == size()) reserve(size() ? size() * 2 : 1);
-    vb.alloc.construct(&vb.elem[size()], value);
+    vb.alloc.construct(&vb.elem[size()], std::move(value));
     ++vb.space;
   }
 

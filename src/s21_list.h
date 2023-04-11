@@ -26,7 +26,7 @@ public:
   typedef typename A::template rebind<list_node<T, A>>::other NodeAllocator;
 
   /* typedef list_node<T, A> node; */
-  typedef list_node<T, A> *node_pointer;
+  typedef list_node<T, A> *node_ptr;
 
   class iterator {
   public:
@@ -37,7 +37,7 @@ public:
     typedef std::bidirectional_iterator_tag iterator_category;
 
     iterator() : ptr{nullptr} {}
-    explicit iterator(node_pointer p) : ptr{p} {}
+    explicit iterator(node_ptr p) : ptr{p} {}
     iterator(const iterator &iter) : ptr{iter.ptr} {}
     ~iterator() { ptr = nullptr; }
 
@@ -72,10 +72,10 @@ public:
     }
 
     reference operator*() const { return ptr->key; }
-    node_pointer get_ptr() const { return ptr; }
+    node_ptr get_ptr() const { return ptr; }
 
   private:
-    node_pointer ptr;
+    node_ptr ptr;
   };
 
   class const_iterator {
@@ -87,7 +87,7 @@ public:
     typedef std::bidirectional_iterator_tag iterator_category;
 
     const_iterator() : ptr{nullptr} {}
-    explicit const_iterator(node_pointer p) : ptr{p} {}
+    explicit const_iterator(node_ptr p) : ptr{p} {}
     const_iterator(const const_iterator &iter) : ptr{iter.ptr} {}
     ~const_iterator() { ptr = nullptr; }
 
@@ -126,10 +126,10 @@ public:
     }
 
     reference operator*() const { return ptr->key; }
-    node_pointer get_ptr() const { return ptr; }
+    node_ptr get_ptr() const { return ptr; }
 
   private:
-    node_pointer ptr;
+    node_ptr ptr;
   };
 
   class reverse_iterator {
@@ -141,7 +141,7 @@ public:
     typedef std::bidirectional_iterator_tag iterator_category;
 
     reverse_iterator() : ptr{nullptr} {}
-    explicit reverse_iterator(node_pointer p) : ptr{p} {}
+    explicit reverse_iterator(node_ptr p) : ptr{p} {}
     reverse_iterator(const reverse_iterator &iter) : ptr{iter.ptr} {}
     ~reverse_iterator() { ptr = nullptr; }
 
@@ -182,7 +182,7 @@ public:
     reference operator*() const { return ptr->key; }
 
   private:
-    node_pointer ptr;
+    node_ptr ptr;
   };
 
   class const_reverse_iterator {
@@ -194,7 +194,7 @@ public:
     typedef std::bidirectional_iterator_tag iterator_category;
 
     const_reverse_iterator() : ptr{nullptr} {}
-    explicit const_reverse_iterator(node_pointer p) : ptr{p} {}
+    explicit const_reverse_iterator(node_ptr p) : ptr{p} {}
     const_reverse_iterator(const const_reverse_iterator &iter)
         : ptr{iter.ptr} {}
     ~const_reverse_iterator() { ptr = nullptr; }
@@ -236,7 +236,7 @@ public:
     reference operator*() const { return ptr->key; }
 
   private:
-    node_pointer ptr;
+    node_ptr ptr;
   };
 
   list() : list(A()) {}
@@ -255,7 +255,7 @@ public:
   list(const list &other) : list(other, other.allocator) {}
 
   list(const list &other, const A &alloc) : list(alloc) {
-      for (node_pointer i = other.head; i; i = i->next)
+      for (node_ptr i = other.head; i; i = i->next)
         push_back(i->key);
   }
 
@@ -369,143 +369,241 @@ public:
 
   void clear() noexcept { resize(0); }
 
-  // how to do it returning iterator?
-  void insert ( const_iterator pos, const T& value ) {
-    if (pos.get_ptr() == head) {
+  iterator insert ( const_iterator pos, const T& value ) {
+    iterator new_iterator(pos.get_ptr());
+    if (new_iterator == begin()) {
       push_front(value);
-    } else if (pos.get_ptr() == nullptr) {
+      new_iterator = iterator(head);
+    } else if (new_iterator == end()) {
       push_back(value);
+      new_iterator = iterator(tail);
     } else {
-      node_pointer tmp = pos.get_ptr();
-      node_pointer newNode = allo.allocate(1);
-      newNode->key = value;
-      newNode->prev = tmp->prev;
-      newNode->next = tmp;
-      tmp->prev->next = newNode;
-      tmp->prev = newNode;
+      node_ptr tmp = pos.get_ptr();
+      node_ptr new_node = allo.allocate(1);
+      new_node->key = value;
+      new_node->prev = tmp->prev;
+      new_node->next = tmp;
+      tmp->prev->next = new_node;
+      tmp->prev = new_node;
+      new_iterator = iterator(new_node);
       ++sz;
     }
-    /* return iterator(newNode); */
+    return new_iterator;
   }
 
 
-  // how to do it returning iterator?
-  void insert ( const_iterator pos, T&& value ) {
-    if (pos.get_ptr() == head) {
+  iterator insert ( const_iterator pos, T&& value ) {
+    iterator new_iterator(pos.get_ptr());
+    if (new_iterator == begin()) {
       push_front(value);
-    } else if (pos.get_ptr() == nullptr) {
+      new_iterator = iterator(head);
+    } else if (new_iterator == end()) {
       push_back(value);
+      new_iterator = iterator(tail);
     } else {
-      node_pointer tmp = pos.get_ptr();
-      node_pointer newNode = allo.allocate(1);
-      newNode->key = std::move(value);
-      newNode->prev = tmp->prev;
-      newNode->next = tmp;
-      tmp->prev->next = newNode;
-      tmp->prev = newNode;
+      node_ptr tmp = pos.get_ptr();
+      node_ptr new_node = allo.allocate(1);
+      new_node->key = std::move(value);
+      new_node->prev = tmp->prev;
+      new_node->next = tmp;
+      tmp->prev->next = new_node;
+      tmp->prev = new_node;
+      new_iterator = iterator(new_node);
       ++sz;
     }
-    /* return iterator(tmp); */
+    return new_iterator;
   }
 
-  // how to do it returning iterator?
-  void insert ( const_iterator pos, size_type count, const T& value ) {
-    while (count--)
-      insert(pos, value);
+  iterator insert ( const_iterator pos, size_type count, const T& value ) {
+    iterator first_iterator(pos.get_ptr());
+    bool first_iteration = true;
+    while (count--) {
+      if (first_iteration) {
+        first_iteration = false;
+        first_iterator = insert(pos, value);
+      } else {
+        insert(pos, value);
+      }
+    }
+    return first_iterator;
   }
 
-  // how to do it returning iterator?
-  template< class InputIt >
-    void insert ( const_iterator pos, InputIt first, InputIt last ) {
-      while (first != last)
-        insert(pos, *first++);
+  template <typename InputIt,
+            typename = typename std::enable_if<
+                std::is_base_of<std::input_iterator_tag,
+                                typename std::iterator_traits<
+                                    InputIt>::iterator_category>::value>::type>
+    iterator insert ( const_iterator pos, InputIt first, InputIt last ) {
+      iterator first_iterator(pos.get_ptr());
+      bool first_iteration = true;
+      while (first != last) {
+        if (first_iteration) {
+          first_iteration = false;
+          first_iterator = insert(pos, *first++);
+        } else {
+          insert(pos, *first++);
+        }
+      }
+      return first_iterator;
     }
 
-  // how to do it returning iterator?
-  void insert ( const_iterator pos, std::initializer_list<T> ilist ) {
-    for (auto it = ilist.begin(); it != ilist.end(); ++it)
-      insert(pos, *it);
+  iterator insert ( const_iterator pos, std::initializer_list<T> ilist ) {
+    iterator first_iterator(pos.get_ptr());
+    bool first_iteration = true;
+    for (auto it = ilist.begin(); it != ilist.end(); ++it) {
+      if (first_iteration) {
+        first_iteration = false;
+        first_iterator = insert(pos, *it);
+      } else {
+        insert(pos, *it);
+      }
+    }
+    return first_iterator;
   }
 
-  /* template< class... Args > */
-  /*   iterator emplace ( const_iterator pos, Args&&... args ) {} */
+  template< class... Args >
+    iterator emplace ( const_iterator pos, Args&&... args ) {
+      iterator it(pos.get_ptr());
+      if (it == begin()) {
+        emplace_front(args...);
+        it = iterator(head);
+      } else if (it == end()) {
+        emplace_back(args...);
+        it = iterator(tail);
+      } else {
+        node_ptr tmp = pos.get_ptr();
+        node_ptr new_node = allo.allocate(1);
+        try {
+          allocator.construct(&new_node->key, std::forward<Args>(args)...);
+          new_node->prev = tmp->prev;
+          new_node->next = tmp;
+          tmp->prev->next = new_node;
+          tmp->prev = new_node;
+          ++sz;
+          it = iterator(new_node);
+        } catch (...) {
+          allo.deallocate(new_node, 1);
+          throw;
+        }
+      }
+      return it;
+    }
 
-  // how to do it returning iterator?
-  void erase ( const_iterator pos ) {
-    node_pointer tmp = pos.get_ptr();
-    if (tmp == head)
+  iterator erase ( const_iterator pos ) {
+    node_ptr tmp = pos.get_ptr();
+    iterator it(tmp);
+    if (tmp == head) {
       pop_front();
-    else if(tmp == tail)
+      it = iterator(head);
+    }
+    else if(tmp == tail) {
       pop_back();
-    else {
+      it = iterator(tail);
+    } else {
       tmp->prev->next = tmp->next;
       tmp->next->prev = tmp->prev;
+      it = iterator(tmp->next);
       allo.deallocate(tmp, 1);
       --sz;
     }
+    return it;
   }
 
   void push_back(const T &value) {
-    node_pointer newNode = allo.allocate(1);
-    newNode->key = value;
-    newNode->prev = tail;
-    newNode->next = nullptr;
-    if (tail != nullptr) tail->next = newNode;
-    tail = newNode;
+    node_ptr new_node = allo.allocate(1);
+    new_node->key = value;
+    new_node->prev = tail;
+    new_node->next = nullptr;
+    if (tail != nullptr) tail->next = new_node;
+    tail = new_node;
     if (head == nullptr)
       head = tail;
     sz++;
   }
 
   void push_back(T &&value) {
-    node_pointer newNode = allo.allocate(1);
-    newNode->key = std::move(value);
-    newNode->prev = tail;
-    newNode->next = nullptr;
+    node_ptr new_node = allo.allocate(1);
+    new_node->key = std::move(value);
+    new_node->prev = tail;
+    new_node->next = nullptr;
     if (tail)
-      tail->next = newNode;
-    tail = newNode;
+      tail->next = new_node;
+    tail = new_node;
     if (head == nullptr)
       head = tail;
     sz++;
   }
 
-  /* template< class... Args > */
-  /*   reference emplace_back( Args&&... args ) {} */
+  template< class... Args >
+    reference emplace_back( Args&&... args ) {
+      node_ptr new_node = allo.allocate(1);
+      try {
+        allocator.construct(&new_node->key, std::forward<Args>(args)...);
+        new_node->prev = tail;
+        new_node->next = nullptr;
+        if (tail)
+          tail->next = new_node;
+        tail = new_node;
+        if (head == nullptr)
+            head = tail;
+          sz++;
+        return tail->key;
+      } catch (...) {
+        allo.deallocate(new_node, 1);
+        throw;
+      }
+    }
 
   void pop_back() { dealloc(size() - 1); }
 
   void push_front(const T &value) {
-    node_pointer newNode = allo.allocate(1);
-    newNode->key = value;
-    newNode->prev = nullptr;
-    newNode->next = head;
+    node_ptr new_node = allo.allocate(1);
+    new_node->key = value;
+    new_node->prev = nullptr;
+    new_node->next = head;
     if (head)
-      head->prev = newNode;
-    head = newNode;
+      head->prev = new_node;
+    head = new_node;
     if (tail == nullptr)
       tail = head;
     sz++;
   }
 
   void push_front(T &&value) {
-    node_pointer newNode = allo.allocate(1);
-    newNode->key = std::move(value);
-    newNode->prev = nullptr;
-    newNode->next = head;
+    node_ptr new_node = allo.allocate(1);
+    new_node->key = std::move(value);
+    new_node->prev = nullptr;
+    new_node->next = head;
     if (head)
-      head->prev = newNode;
-    head = newNode;
+      head->prev = new_node;
+    head = new_node;
     if (tail == nullptr)
       tail = head;
     sz++;
   }
 
-  /* template< class... Args > */
-  /*   reference emplace_front( Args&&... args ) {} */
+  template< class... Args >
+    reference emplace_front( Args&&... args ) {
+      node_ptr new_node = allo.allocate(1);
+      try {
+      allocator.construct(&new_node->key, std::forward<Args>(args)...);
+      new_node->prev = nullptr;
+      new_node->next = head;
+      if (head)
+        head->prev = new_node;
+      head = new_node;
+      if (tail == nullptr)
+        tail = head;
+      sz++;
+      return head->key;
+      } catch (...) {
+        allo.deallocate(new_node, 1);
+        throw;
+      }
+    }
 
   void pop_front() {
-    node_pointer ptr = head;
+    node_ptr ptr = head;
     head = head->next;
     head->prev = nullptr;
     allo.deallocate(ptr, 1);
@@ -553,7 +651,7 @@ private:
   NodeAllocator allo;
   void dealloc(size_type count) {
     if (tail && sz > count) {
-      node_pointer tmp = tail, pre = tmp->prev;
+      node_ptr tmp = tail, pre = tmp->prev;
       for (; sz != count; tmp = pre, pre = tmp ? tmp->prev : nullptr, --sz)
         allo.deallocate(tmp, 1);
       if (tmp)

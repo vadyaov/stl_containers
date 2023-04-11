@@ -10,7 +10,9 @@ int main() {
     std::cout << i << " ";
   std::cout << std::endl;
   std::cout << "a.size = " << a.size() << std::endl;
-  a.erase(++a.cbegin());
+  /* std::cout << *a.emplace(a.cbegin(), 3) << std::endl; */
+  /* std::cout << *a.erase(a.cbegin()) << std::endl; */
+  std::cout << *a.insert(a.cend(), {-5, -1, -1, -1, -1, -1, -1}) << std::endl;
   for (auto i : a)
     std::cout << i << " ";
   std::cout << std::endl;

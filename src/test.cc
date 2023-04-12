@@ -4,8 +4,8 @@
 
 int main() {
 
-  std::vector<int> a{-1, -2, -3, -4, -5, -6};
-  s21::vector<int> b{-1, -2, -3, -4, -5, -6};
+  s21::vector<int> a{-1, -2, -3, -4, -5, -6};
+  s21::vector<int> b{1, 2, 3, 4, 5, 6};
 
   /* s21::vector<int>::const_iterator k(a.cbegin()); */
   /* s21::vector<int>::const_iterator l(a.cend() - 2); */
@@ -17,7 +17,17 @@ int main() {
   for (auto i = a.begin(); i != a.end(); ++i)
     std::cout << *i << " ";
   std::cout << std::endl;
-  a.emplace(a.begin() + 2, 30, 11, 8, -10);
+  /* a.emplace(a.begin() + 2, 30, 11, 8, -10); */
+  std::cout << "b.size = " << b.size() << std::endl;
+  std::cout << "b.capacity = " << b.capacity() << std::endl;
+  for (auto i : b)
+    std::cout << i << " ";
+  std::cout << std::endl;
+
+  s21::vector<int>::iterator it = a.begin();
+  std::cout << *it << std::endl;
+  a.swap(b);
+  std::cout << *it << std::endl;
 
   /* a.pop_back(); */
   /* std::cout << *a.erase(a.begin() + 2, a.begin() + 10) << std::endl;; */
@@ -30,11 +40,11 @@ int main() {
     std::cout << i << " ";
   std::cout << std::endl;
 
-  /* std::cout << "b.size = " << b.size() << std::endl; */
-  /* std::cout << "b.capacity = " << b.capacity() << std::endl; */
-  /* for (auto i : b) */
-  /*   std::cout << i << " "; */
-  /* std::cout << std::endl; */
+  std::cout << "b.size = " << b.size() << std::endl;
+  std::cout << "b.capacity = " << b.capacity() << std::endl;
+  for (auto i : b)
+    std::cout << i << " ";
+  std::cout << std::endl;
 
     return 0;
 }

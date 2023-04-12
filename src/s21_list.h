@@ -244,7 +244,6 @@ public:
       : head{nullptr}, tail{nullptr}, sz{0}, allocator{alloc} {}
   explicit list(size_type count, const T &value, const A &alloc = A())
       : head{nullptr}, tail{nullptr}, sz{0}, allocator{alloc} {
-    if (count != 0)
       for (size_type i = 0; i < count; ++i)
         push_back(value);
   }
@@ -613,8 +612,7 @@ public:
   void resize(size_type count) { resize(count, T()); }
 
   void resize(size_type count, const T &value) {
-    if (sz == count)
-      return;
+    if (sz == count) return;
     if (count > sz)
       while (sz != count)
         push_back(value);
@@ -622,11 +620,20 @@ public:
       dealloc(count);
   }
 
-  /* void swap( list& other ) noexcept {} */
+  void swap( list& other ) noexcept {
+    std::swap(head, other.head);
+    std::swap(tail, other.tail);
+    std::swap(sz, other.sz);
+  }
 
   /* Operations */
 
-  /* void merge( list&& other ) {} */
+  void merge( list&& other ) {
+    if (this == &other) return;
+    // merge SORTED lists
+
+    other.clear();
+  }
   /* template< class Compare > */
   /*   void merge( list&& other, Compare comp ) {} */
 
@@ -641,7 +648,8 @@ public:
 
   /* void unique() {} */
 
-  /* void sort() {} */
+  void sort() {
+  }
 
 private:
   list_node<T, A> *head;

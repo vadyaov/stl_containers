@@ -10,7 +10,7 @@ template <typename T, typename A = std::allocator<T>> struct list_node {
   list_node *prev;
   list_node *next;
   T key;
-  explicit list_node(const T &val, list_node *p = nullptr,
+  explicit list_node(const T &val = T(), list_node *p = nullptr,
                      list_node *n = nullptr)
       : prev{p}, next{n}, key{val} {}
 };
@@ -25,7 +25,7 @@ public:
   typedef typename A::size_type size_type;
   typedef typename A::template rebind<list_node<T, A>>::other NodeAllocator;
 
-  /* typedef list_node<T, A> node; */
+  typedef list_node<T, A> node;
   typedef list_node<T, A> *node_ptr;
 
   class iterator {
@@ -631,7 +631,21 @@ public:
   void merge( list&& other ) {
     if (this == &other) return;
     // merge SORTED lists
+    const_iterator start = cbegin();
+    const_iterator o_start = other.cbegin();
 
+    while (o_start != other.end() && start != end()) {
+      if (*o_start < *start) {
+        insert(start, *o_start);
+        ++o_start;
+      } else {
+        ++start;
+      }
+    }
+    while (o_start != other.end()) {
+      push_back(*o_start);
+      ++o_start;
+    }
     other.clear();
   }
   /* template< class Compare > */
@@ -651,53 +665,70 @@ public:
   void sort() { head = MergeSort(head); }
 
 private:
-  node_ptr MergeSort(node_ptr head_) const noexcept {
-    if (head_ == nullptr)
+  node_ptr MergeSort(node_ptr head_) {
+    if (head_ == nullptr || head_->next == nullptr)
       return head_;
-    if (head_->next == nullptr)
-      return head;
-    node_ptr first_list = nullptr,
-             second_list = nullptr;
-    // splitting the list
-    second_list = SplitList(head_);
 
-    first_list = MergeSort(head_);
-    second_list = MergeSort(second_list);
+    node_ptr middle = GetMiddle(head_, nullptr);
+    node_ptr nextToMiddle = middle->next;
 
-    node_ptr sorted_list = Merge(first_list, second_list);
-    return sorted_list;
+    middle->next = nullptr;
+
+    node_ptr leftHead = MergeSort(head_);
+    node_ptr rightHead = MergeSort(nextToMiddle);
+
+    return Merge(leftHead, rightHead);
   }
 
-  node_ptr SplitList(node_ptr head_) {
-    node_ptr fast_ptr = head_,
-             slow_ptr = head_;
-    while (fast_ptr != nullptr && fast_ptr->next != nullptr && fast_ptr->next->next != nullptr) {
-      fast_ptr = fast_ptr->next->next;
-      slow_ptr = slow_ptr->next;
+  node_ptr GetMiddle(node_ptr start, node_ptr end) {
+    node_ptr slow = start;
+    node_ptr fast = start->next;
+
+    while (fast != end) {
+      fast = fast->next;
+      if (fast != end) {
+        slow = slow->next;
+        fast = fast->next;
+      }
     }
-    node_ptr second_half = slow_ptr->next;
 
-    second_half->prev = nullptr;
-    slow_ptr->next = nullptr;
-    return second_half;
+    return slow;
   }
 
-  node_ptr Merge(node_ptr first_list, node_ptr second_list) {
-    if (first_list == nullptr) return second_list;
-    if (second_list == nullptr) return first_list;
+  node_ptr Merge(node_ptr leftHead, node_ptr rightHead) {
+    node dummy;
+    node_ptr tail_ = &dummy;
+    while (leftHead != nullptr && rightHead != nullptr) {
+      if (leftHead->key < rightHead->key) {
+        tail_->next = leftHead;
+        leftHead->prev = tail_;
+        leftHead = leftHead->next;
+      } else {
+        tail_->next = rightHead;
+        rightHead->prev = tail_;
+        rightHead = rightHead->next;
+      }
 
-    if (first_list->key > second_list->key) {
-      second_list->next = Merge(first_list, second_list->next);
-      second_list->next->prev = second_list;
-      second_list->prev = nullptr;
-      return second_list;
+      tail_ = tail_->next;
+    }
+
+    if (leftHead != nullptr) {
+      tail_->next = leftHead;
+      leftHead->prev = tail_;
     } else {
-      first_list->next = Merge(first_list->next, second_list);
-      first_list->next->prev = first_list;
-      first_list->prev = nullptr;
-      return first_list;
+      tail_->next = rightHead;
+      rightHead->prev = tail_;
     }
+
+    while (tail_->next != nullptr)
+      tail_ = tail_->next;
+
+    tail_->next = nullptr;
+    tail = tail_;
+
+    return dummy.next;
   }
+
 
   void dealloc(size_type count) {
     if (tail && sz > count) {

@@ -631,20 +631,22 @@ public:
   void merge( list&& other ) {
     if (this == &other) return;
     // merge SORTED lists
-    const_iterator start = cbegin();
-    const_iterator o_start = other.cbegin();
+    /* const_iterator start = cbegin(); */
+    /* const_iterator o_start = other.cbegin(); */
+    node_ptr start = head;
+    node_ptr o_start = other.head;
 
-    while (o_start != other.end() && start != end()) {
-      if (*o_start < *start) {
-        insert(start, *o_start);
-        ++o_start;
+    while (o_start != nullptr && start != nullptr) {
+      if (o_start->key < start->key) {
+        insert(const_iterator(start), std::move(o_start->key));
+        o_start = o_start->next;
       } else {
-        ++start;
+        start = start->next;
       }
     }
-    while (o_start != other.end()) {
-      push_back(*o_start);
-      ++o_start;
+    while (o_start != nullptr) {
+      push_back(std::move(o_start->key));
+      o_start = o_start->next;
     }
     other.clear();
   }
@@ -731,6 +733,7 @@ private:
 
 
   void dealloc(size_type count) {
+    std::cout << "tail: " << tail->key << std::endl;
     if (tail && sz > count) {
       node_ptr tmp = tail, pre = tmp->prev;
       for (; sz != count; tmp = pre, pre = tmp ? tmp->prev : nullptr, --sz)
@@ -739,7 +742,7 @@ private:
         tmp->next = nullptr;
       tail = tmp;
       if (sz == 0)
-        head = tail;
+        head = tail = nullptr;
     }
   }
 

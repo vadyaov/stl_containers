@@ -648,15 +648,57 @@ public:
 
   /* void unique() {} */
 
-  void sort() {
-  }
+  void sort() { head = MergeSort(head); }
 
 private:
-  list_node<T, A> *head;
-  list_node<T, A> *tail;
-  size_type sz;
-  A allocator;
-  NodeAllocator allo;
+  node_ptr MergeSort(node_ptr head_) const noexcept {
+    if (head_ == nullptr)
+      return head_;
+    if (head_->next == nullptr)
+      return head;
+    node_ptr first_list = nullptr,
+             second_list = nullptr;
+    // splitting the list
+    second_list = SplitList(head_);
+
+    first_list = MergeSort(head_);
+    second_list = MergeSort(second_list);
+
+    node_ptr sorted_list = Merge(first_list, second_list);
+    return sorted_list;
+  }
+
+  node_ptr SplitList(node_ptr head_) {
+    node_ptr fast_ptr = head_,
+             slow_ptr = head_;
+    while (fast_ptr != nullptr && fast_ptr->next != nullptr && fast_ptr->next->next != nullptr) {
+      fast_ptr = fast_ptr->next->next;
+      slow_ptr = slow_ptr->next;
+    }
+    node_ptr second_half = slow_ptr->next;
+
+    second_half->prev = nullptr;
+    slow_ptr->next = nullptr;
+    return second_half;
+  }
+
+  node_ptr Merge(node_ptr first_list, node_ptr second_list) {
+    if (first_list == nullptr) return second_list;
+    if (second_list == nullptr) return first_list;
+
+    if (first_list->key > second_list->key) {
+      second_list->next = Merge(first_list, second_list->next);
+      second_list->next->prev = second_list;
+      second_list->prev = nullptr;
+      return second_list;
+    } else {
+      first_list->next = Merge(first_list->next, second_list);
+      first_list->next->prev = first_list;
+      first_list->prev = nullptr;
+      return first_list;
+    }
+  }
+
   void dealloc(size_type count) {
     if (tail && sz > count) {
       node_ptr tmp = tail, pre = tmp->prev;
@@ -669,6 +711,14 @@ private:
         head = tail;
     }
   }
+
+
+private:
+  list_node<T, A> *head;
+  list_node<T, A> *tail;
+  size_type sz;
+  A allocator;
+  NodeAllocator allo;
 };
 } // namespace s21
 

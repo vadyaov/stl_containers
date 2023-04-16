@@ -630,9 +630,7 @@ public:
 
   void merge( list&& other ) {
     if (this == &other) return;
-    // merge SORTED lists
-    /* const_iterator start = cbegin(); */
-    /* const_iterator o_start = other.cbegin(); */
+
     node_ptr start = head;
     node_ptr o_start = other.head;
 
@@ -733,14 +731,14 @@ private:
 
 
   void dealloc(size_type count) {
-    std::cout << "tail: " << tail->key << std::endl;
     if (tail && sz > count) {
       node_ptr tmp = tail, pre = tmp->prev;
       for (; sz != count; tmp = pre, pre = tmp ? tmp->prev : nullptr, --sz)
         allo.deallocate(tmp, 1);
-      if (tmp)
+      if (tmp && sz != 0) {
         tmp->next = nullptr;
-      tail = tmp;
+        tail = tmp;
+      }
       if (sz == 0)
         head = tail = nullptr;
     }

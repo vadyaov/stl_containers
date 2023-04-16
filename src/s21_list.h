@@ -360,7 +360,7 @@ public:
 
   /* Capacity */
 
-  bool empty() const noexcept { return size() == 0; }
+  bool empty() const noexcept { return sz == 0; }
   size_type size() const noexcept { return sz; }
   size_type max_size() const noexcept { return allo.max_size(); }
 
@@ -604,7 +604,8 @@ public:
   void pop_front() {
     node_ptr ptr = head;
     head = head->next;
-    head->prev = nullptr;
+    if (head)
+      head->prev = nullptr;
     allo.deallocate(ptr, 1);
     --sz;
   }
@@ -649,12 +650,55 @@ public:
     other.clear();
   }
 
-  /* void splice( const_iterator pos, list&& other ) {} */
+  void splice( const_iterator pos, list&& other ) {
+    if (other.empty()) return;
+    if (empty()) {
+      head = other.head;
+      tail = other.tail;
+      sz = other.sz;
+      other.head = other.tail = nullptr;
+      other.sz = 0;
+      return;
+    }
+
+    node_ptr tmp = pos.get_ptr();
+    if (tmp == head) {
+      other.tail->next = head;
+      head->prev = other.tail;
+      head = other.head;
+    } else if (tmp == nullptr) {
+      tail->next = other.head;
+      other.head->prev = tail;
+      tail = other.tail;
+    } else {
+      tmp->prev->next = other.head;
+      other.head->prev = tmp->prev;
+
+      other.tail->next = tmp;
+      tmp->prev = other.tail;
+    }
+
+    sz += other.sz;
+    other.head = other.tail = nullptr;
+    other.sz = 0;
+  }
+
   /* void splice( const_iterator pos, list&& other, const_iterator it ) {} */
   /* void splice( const_iterator pos, list&& other, */
   /*              const_iterator first, const_iterator last ) {} */
 
-  /* void remove( const T& value ) {} */
+  void remove( const T& value ) {
+    node_ptr tmp = head;
+    while (tmp != nullptr) {
+      if (tmp->key == value) {
+        node_ptr next_node = tmp->next;
+        erase(const_iterator(tmp));
+        tmp = next_node;
+      } else {
+        tmp = tmp->next;
+      }
+    }
+  }
 
   /* void reverse() noexcept {} */
 

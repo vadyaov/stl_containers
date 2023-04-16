@@ -648,8 +648,6 @@ public:
     }
     other.clear();
   }
-  /* template< class Compare > */
-  /*   void merge( list&& other, Compare comp ) {} */
 
   /* void splice( const_iterator pos, list&& other ) {} */
   /* void splice( const_iterator pos, list&& other, const_iterator it ) {} */

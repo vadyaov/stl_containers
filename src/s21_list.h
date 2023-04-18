@@ -1,7 +1,6 @@
 #ifndef _list_
 #define _list_
 
-#include <iostream>
 #include <memory>
 
 namespace s21 {
@@ -244,8 +243,8 @@ public:
       : head{nullptr}, tail{nullptr}, sz{0}, allocator{alloc} {}
   explicit list(size_type count, const T &value, const A &alloc = A())
       : head{nullptr}, tail{nullptr}, sz{0}, allocator{alloc} {
-      for (size_type i = 0; i < count; ++i)
-        push_back(value);
+    for (size_type i = 0; i < count; ++i)
+      push_back(value);
   }
 
   explicit list(size_type count, const A &alloc = A())
@@ -254,8 +253,8 @@ public:
   list(const list &other) : list(other, other.allocator) {}
 
   list(const list &other, const A &alloc) : list(alloc) {
-      for (node_ptr i = other.head; i; i = i->next)
-        push_back(i->key);
+    for (node_ptr i = other.head; i; i = i->next)
+      push_back(i->key);
   }
 
   list &operator=(const list &other) {
@@ -283,7 +282,7 @@ public:
                 std::is_base_of<std::input_iterator_tag,
                                 typename std::iterator_traits<
                                     InputIt>::iterator_category>::value>::type>
-  list(InputIt first, InputIt last, const A& alloc = A()) : list(alloc) {
+  list(InputIt first, InputIt last, const A &alloc = A()) : list(alloc) {
     if (!(last > first))
       throw std::length_error("last <= first");
 
@@ -368,7 +367,7 @@ public:
 
   void clear() noexcept { resize(0); }
 
-  iterator insert ( const_iterator pos, const T& value ) {
+  iterator insert(const_iterator pos, const T &value) {
     iterator new_iterator(pos.get_ptr());
     if (new_iterator == begin()) {
       push_front(value);
@@ -390,8 +389,7 @@ public:
     return new_iterator;
   }
 
-
-  iterator insert ( const_iterator pos, T&& value ) {
+  iterator insert(const_iterator pos, T &&value) {
     iterator new_iterator(pos.get_ptr());
     if (new_iterator == begin()) {
       push_front(value);
@@ -413,7 +411,7 @@ public:
     return new_iterator;
   }
 
-  iterator insert ( const_iterator pos, size_type count, const T& value ) {
+  iterator insert(const_iterator pos, size_type count, const T &value) {
     iterator first_iterator(pos.get_ptr());
     bool first_iteration = true;
     while (count--) {
@@ -432,21 +430,21 @@ public:
                 std::is_base_of<std::input_iterator_tag,
                                 typename std::iterator_traits<
                                     InputIt>::iterator_category>::value>::type>
-    iterator insert ( const_iterator pos, InputIt first, InputIt last ) {
-      iterator first_iterator(pos.get_ptr());
-      bool first_iteration = true;
-      while (first != last) {
-        if (first_iteration) {
-          first_iteration = false;
-          first_iterator = insert(pos, *first++);
-        } else {
-          insert(pos, *first++);
-        }
+  iterator insert(const_iterator pos, InputIt first, InputIt last) {
+    iterator first_iterator(pos.get_ptr());
+    bool first_iteration = true;
+    while (first != last) {
+      if (first_iteration) {
+        first_iteration = false;
+        first_iterator = insert(pos, *first++);
+      } else {
+        insert(pos, *first++);
       }
-      return first_iterator;
     }
+    return first_iterator;
+  }
 
-  iterator insert ( const_iterator pos, std::initializer_list<T> ilist ) {
+  iterator insert(const_iterator pos, std::initializer_list<T> ilist) {
     iterator first_iterator(pos.get_ptr());
     bool first_iteration = true;
     for (auto it = ilist.begin(); it != ilist.end(); ++it) {
@@ -460,42 +458,41 @@ public:
     return first_iterator;
   }
 
-  template< class... Args >
-    iterator emplace ( const_iterator pos, Args&&... args ) {
-      iterator it(pos.get_ptr());
-      if (it == begin()) {
-        emplace_front(args...);
-        it = iterator(head);
-      } else if (it == end()) {
-        emplace_back(args...);
-        it = iterator(tail);
-      } else {
-        node_ptr tmp = pos.get_ptr();
-        node_ptr new_node = allo.allocate(1);
-        try {
-          allocator.construct(&new_node->key, std::forward<Args>(args)...);
-          new_node->prev = tmp->prev;
-          new_node->next = tmp;
-          tmp->prev->next = new_node;
-          tmp->prev = new_node;
-          ++sz;
-          it = iterator(new_node);
-        } catch (...) {
-          allo.deallocate(new_node, 1);
-          throw;
-        }
+  template <class... Args>
+  iterator emplace(const_iterator pos, Args &&...args) {
+    iterator it(pos.get_ptr());
+    if (it == begin()) {
+      emplace_front(args...);
+      it = iterator(head);
+    } else if (it == end()) {
+      emplace_back(args...);
+      it = iterator(tail);
+    } else {
+      node_ptr tmp = pos.get_ptr();
+      node_ptr new_node = allo.allocate(1);
+      try {
+        allocator.construct(&new_node->key, std::forward<Args>(args)...);
+        new_node->prev = tmp->prev;
+        new_node->next = tmp;
+        tmp->prev->next = new_node;
+        tmp->prev = new_node;
+        ++sz;
+        it = iterator(new_node);
+      } catch (...) {
+        allo.deallocate(new_node, 1);
+        throw;
       }
-      return it;
     }
+    return it;
+  }
 
-  iterator erase ( const_iterator pos ) {
+  iterator erase(const_iterator pos) {
     node_ptr tmp = pos.get_ptr();
     iterator it(tmp);
     if (tmp == head) {
       pop_front();
       it = iterator(head);
-    }
-    else if(tmp == tail) {
+    } else if (tmp == tail) {
       pop_back();
       it = iterator(tail);
     } else {
@@ -513,7 +510,8 @@ public:
     new_node->key = value;
     new_node->prev = tail;
     new_node->next = nullptr;
-    if (tail != nullptr) tail->next = new_node;
+    if (tail != nullptr)
+      tail->next = new_node;
     tail = new_node;
     if (head == nullptr)
       head = tail;
@@ -533,25 +531,24 @@ public:
     sz++;
   }
 
-  template< class... Args >
-    reference emplace_back( Args&&... args ) {
-      node_ptr new_node = allo.allocate(1);
-      try {
-        allocator.construct(&new_node->key, std::forward<Args>(args)...);
-        new_node->prev = tail;
-        new_node->next = nullptr;
-        if (tail)
-          tail->next = new_node;
-        tail = new_node;
-        if (head == nullptr)
-            head = tail;
-          sz++;
-        return tail->key;
-      } catch (...) {
-        allo.deallocate(new_node, 1);
-        throw;
-      }
+  template <class... Args> reference emplace_back(Args &&...args) {
+    node_ptr new_node = allo.allocate(1);
+    try {
+      allocator.construct(&new_node->key, std::forward<Args>(args)...);
+      new_node->prev = tail;
+      new_node->next = nullptr;
+      if (tail)
+        tail->next = new_node;
+      tail = new_node;
+      if (head == nullptr)
+        head = tail;
+      sz++;
+      return tail->key;
+    } catch (...) {
+      allo.deallocate(new_node, 1);
+      throw;
     }
+  }
 
   void pop_back() { dealloc(size() - 1); }
 
@@ -581,10 +578,9 @@ public:
     sz++;
   }
 
-  template< class... Args >
-    reference emplace_front( Args&&... args ) {
-      node_ptr new_node = allo.allocate(1);
-      try {
+  template <class... Args> reference emplace_front(Args &&...args) {
+    node_ptr new_node = allo.allocate(1);
+    try {
       allocator.construct(&new_node->key, std::forward<Args>(args)...);
       new_node->prev = nullptr;
       new_node->next = head;
@@ -595,11 +591,11 @@ public:
         tail = head;
       sz++;
       return head->key;
-      } catch (...) {
-        allo.deallocate(new_node, 1);
-        throw;
-      }
+    } catch (...) {
+      allo.deallocate(new_node, 1);
+      throw;
     }
+  }
 
   void pop_front() {
     node_ptr ptr = head;
@@ -613,7 +609,8 @@ public:
   void resize(size_type count) { resize(count, T()); }
 
   void resize(size_type count, const T &value) {
-    if (sz == count) return;
+    if (sz == count)
+      return;
     if (count > sz)
       while (sz != count)
         push_back(value);
@@ -621,7 +618,7 @@ public:
       dealloc(count);
   }
 
-  void swap( list& other ) noexcept {
+  void swap(list &other) noexcept {
     std::swap(head, other.head);
     std::swap(tail, other.tail);
     std::swap(sz, other.sz);
@@ -629,8 +626,9 @@ public:
 
   /* Operations */
 
-  void merge( list&& other ) {
-    if (this == &other) return;
+  void merge(list &&other) {
+    if (this == &other)
+      return;
 
     node_ptr start = head;
     node_ptr o_start = other.head;
@@ -650,8 +648,9 @@ public:
     other.clear();
   }
 
-  void splice( const_iterator pos, list&& other ) {
-    if (other.empty()) return;
+  void splice(const_iterator pos, list &&other) {
+    if (other.empty())
+      return;
     if (empty()) {
       head = other.head;
       tail = other.tail;
@@ -683,11 +682,7 @@ public:
     other.sz = 0;
   }
 
-  /* void splice( const_iterator pos, list&& other, const_iterator it ) {} */
-  /* void splice( const_iterator pos, list&& other, */
-  /*              const_iterator first, const_iterator last ) {} */
-
-  void remove( const T& value ) {
+  void remove(const T &value) {
     node_ptr tmp = head;
     while (tmp != nullptr) {
       if (tmp->key == value) {
@@ -700,9 +695,37 @@ public:
     }
   }
 
-  /* void reverse() noexcept {} */
+  void reverse() noexcept {
+    if (head == nullptr || head->next == nullptr)
+      return;
+    node_ptr curr = head;
+    node_ptr next = nullptr;
+    while (curr != nullptr) {
+      next = curr->next;
+      curr->next = curr->prev;
+      curr->prev = next;
+      curr = next;
+    }
+    node_ptr tmp = head;
+    head = tail;
+    tail = tmp;
+  }
 
-  /* void unique() {} */
+  void unique() {
+    node_ptr curr = head;
+    node_ptr next = nullptr;
+    while (curr != nullptr) {
+      next = curr->next;
+
+      while (next != nullptr && next->key == curr->key) {
+        node_ptr tmp = next->next;
+        erase(const_iterator(next));
+        next = tmp;
+      }
+
+      curr = next;
+    }
+  }
 
   void sort() { head = MergeSort(head); }
 
@@ -771,7 +794,6 @@ private:
     return dummy.next;
   }
 
-
   void dealloc(size_type count) {
     if (tail && sz > count) {
       node_ptr tmp = tail, pre = tmp->prev;
@@ -785,7 +807,6 @@ private:
         head = tail = nullptr;
     }
   }
-
 
 private:
   list_node<T, A> *head;

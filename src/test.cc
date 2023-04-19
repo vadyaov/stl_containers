@@ -1,5 +1,5 @@
 #include <iostream>
-#include "s21_vector.h"
+#include "vector.h"
 #include <vector>
 
 int main() {
@@ -24,7 +24,7 @@ int main() {
     std::cout << i << " ";
   std::cout << std::endl;
 
-  s21::vector<int>::iterator it = a.begin();
+  s21::vector<int>::iterator it = --a.end();
   std::cout << *it << std::endl;
   a.swap(b);
   std::cout << *it << std::endl;

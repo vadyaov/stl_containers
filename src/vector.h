@@ -1,10 +1,9 @@
 #ifndef _vector_
 #define _vector_
 
-#include <iostream>
-#include <iterator>
 #include <memory>
 #include <stdexcept>
+#include <initializer_list>
 
 namespace s21 {
 

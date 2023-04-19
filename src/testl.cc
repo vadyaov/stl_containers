@@ -1,11 +1,11 @@
 #include <iostream>
 #include <list>
 #include <vector>
-#include "s21_list.h"
+#include "list.h"
 
 int main() {
-  s21::list<int> v {1, 0, -19, 5, -6, -7, -8, -9, -10};
-  s21::list<int> a {1, 1, 1, 1, 1, -11, 85, 1, 43, 500, -6, 500, 7, 7, 7, 8, 9, 10};
+  std::list<int> v {1, 0, -19, 5, -6, -7, -8, -9, -10};
+  std::list<int> a {1, 1, 1, 1, 1, -11, 85, 1, 43, 500, -6, 500, 7, 7, 7, 8, 9, 10};
   std::cout << "a:" << std::endl;
   for (auto i : a)
     std::cout << i << " ";
@@ -18,7 +18,7 @@ int main() {
   std::cout << std::endl;
   std::cout << "v.size = " << a.size() << std::endl;
 
-  a.splice(a.cbegin(), std::move(v), ++v.cbegin());
+  a.splice(a.cbegin(), std::move(v));
 
   std::cout << "a:" << std::endl;
   for (auto i : a)

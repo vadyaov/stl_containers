@@ -2,10 +2,13 @@
 #define _list_
 
 #include <memory>
+#include <stdexcept>
+#include <initializer_list>
 
 namespace s21 {
 
-template <typename T, typename A = std::allocator<T>> struct list_node {
+template <typename T, typename A = std::allocator<T>>
+struct list_node {
   list_node *prev;
   list_node *next;
   T key;
@@ -14,8 +17,9 @@ template <typename T, typename A = std::allocator<T>> struct list_node {
       : prev{p}, next{n}, key{val} {}
 };
 
-template <typename T, typename A = std::allocator<T>> class list {
-public:
+template <typename T, typename A = std::allocator<T>>
+class list {
+ public:
   typedef A allocator_type;
   typedef typename A::value_type value_type;
   typedef typename A::reference reference;
@@ -28,7 +32,7 @@ public:
   typedef list_node<T, A> *node_ptr;
 
   class iterator {
-  public:
+   public:
     typedef typename A::difference_type difference_type;
     typedef typename A::value_type value_type;
     typedef typename A::reference reference;
@@ -73,12 +77,12 @@ public:
     reference operator*() const { return ptr->key; }
     node_ptr get_ptr() const { return ptr; }
 
-  private:
+   private:
     node_ptr ptr;
   };
 
   class const_iterator {
-  public:
+   public:
     typedef typename A::difference_type difference_type;
     typedef typename A::value_type value_type;
     typedef typename A::const_reference reference;
@@ -127,12 +131,12 @@ public:
     reference operator*() const { return ptr->key; }
     node_ptr get_ptr() const { return ptr; }
 
-  private:
+   private:
     node_ptr ptr;
   };
 
   class reverse_iterator {
-  public:
+   public:
     typedef typename A::difference_type difference_type;
     typedef typename A::value_type value_type;
     typedef typename A::reference reference;
@@ -180,12 +184,12 @@ public:
 
     reference operator*() const { return ptr->key; }
 
-  private:
+   private:
     node_ptr ptr;
   };
 
   class const_reverse_iterator {
-  public:
+   public:
     typedef typename A::difference_type difference_type;
     typedef typename A::value_type value_type;
     typedef typename A::const_reference reference;
@@ -234,7 +238,7 @@ public:
 
     reference operator*() const { return ptr->key; }
 
-  private:
+   private:
     node_ptr ptr;
   };
 
@@ -243,8 +247,7 @@ public:
       : head{nullptr}, tail{nullptr}, sz{0}, allocator{alloc} {}
   explicit list(size_type count, const T &value, const A &alloc = A())
       : head{nullptr}, tail{nullptr}, sz{0}, allocator{alloc} {
-    for (size_type i = 0; i < count; ++i)
-      push_back(value);
+    for (size_type i = 0; i < count; ++i) push_back(value);
   }
 
   explicit list(size_type count, const A &alloc = A())
@@ -253,13 +256,11 @@ public:
   list(const list &other) : list(other, other.allocator) {}
 
   list(const list &other, const A &alloc) : list(alloc) {
-    for (node_ptr i = other.head; i; i = i->next)
-      push_back(i->key);
+    for (node_ptr i = other.head; i; i = i->next) push_back(i->key);
   }
 
   list &operator=(const list &other) {
-    if (this == &other)
-      return *this;
+    if (this == &other) return *this;
     list tmp{other};
     std::swap(*this, tmp);
     return *this;
@@ -283,11 +284,9 @@ public:
                                 typename std::iterator_traits<
                                     InputIt>::iterator_category>::value>::type>
   list(InputIt first, InputIt last, const A &alloc = A()) : list(alloc) {
-    if (!(last > first))
-      throw std::length_error("last <= first");
+    if (!(last > first)) throw std::length_error("last <= first");
 
-    for (InputIt i = first; i < last; ++i)
-      push_back(*i);
+    for (InputIt i = first; i < last; ++i) push_back(*i);
   }
 
   explicit list(std::initializer_list<T> init, const A &alloc = A())
@@ -510,11 +509,9 @@ public:
     new_node->key = value;
     new_node->prev = tail;
     new_node->next = nullptr;
-    if (tail != nullptr)
-      tail->next = new_node;
+    if (tail != nullptr) tail->next = new_node;
     tail = new_node;
-    if (head == nullptr)
-      head = tail;
+    if (head == nullptr) head = tail;
     sz++;
   }
 
@@ -523,25 +520,22 @@ public:
     new_node->key = std::move(value);
     new_node->prev = tail;
     new_node->next = nullptr;
-    if (tail)
-      tail->next = new_node;
+    if (tail) tail->next = new_node;
     tail = new_node;
-    if (head == nullptr)
-      head = tail;
+    if (head == nullptr) head = tail;
     sz++;
   }
 
-  template <class... Args> reference emplace_back(Args &&...args) {
+  template <class... Args>
+  reference emplace_back(Args &&...args) {
     node_ptr new_node = allo.allocate(1);
     try {
       allocator.construct(&new_node->key, std::forward<Args>(args)...);
       new_node->prev = tail;
       new_node->next = nullptr;
-      if (tail)
-        tail->next = new_node;
+      if (tail) tail->next = new_node;
       tail = new_node;
-      if (head == nullptr)
-        head = tail;
+      if (head == nullptr) head = tail;
       sz++;
       return tail->key;
     } catch (...) {
@@ -557,11 +551,9 @@ public:
     new_node->key = value;
     new_node->prev = nullptr;
     new_node->next = head;
-    if (head)
-      head->prev = new_node;
+    if (head) head->prev = new_node;
     head = new_node;
-    if (tail == nullptr)
-      tail = head;
+    if (tail == nullptr) tail = head;
     sz++;
   }
 
@@ -570,25 +562,22 @@ public:
     new_node->key = std::move(value);
     new_node->prev = nullptr;
     new_node->next = head;
-    if (head)
-      head->prev = new_node;
+    if (head) head->prev = new_node;
     head = new_node;
-    if (tail == nullptr)
-      tail = head;
+    if (tail == nullptr) tail = head;
     sz++;
   }
 
-  template <class... Args> reference emplace_front(Args &&...args) {
+  template <class... Args>
+  reference emplace_front(Args &&...args) {
     node_ptr new_node = allo.allocate(1);
     try {
       allocator.construct(&new_node->key, std::forward<Args>(args)...);
       new_node->prev = nullptr;
       new_node->next = head;
-      if (head)
-        head->prev = new_node;
+      if (head) head->prev = new_node;
       head = new_node;
-      if (tail == nullptr)
-        tail = head;
+      if (tail == nullptr) tail = head;
       sz++;
       return head->key;
     } catch (...) {
@@ -600,8 +589,7 @@ public:
   void pop_front() {
     node_ptr ptr = head;
     head = head->next;
-    if (head)
-      head->prev = nullptr;
+    if (head) head->prev = nullptr;
     allo.deallocate(ptr, 1);
     --sz;
   }
@@ -609,11 +597,9 @@ public:
   void resize(size_type count) { resize(count, T()); }
 
   void resize(size_type count, const T &value) {
-    if (sz == count)
-      return;
+    if (sz == count) return;
     if (count > sz)
-      while (sz != count)
-        push_back(value);
+      while (sz != count) push_back(value);
     else
       dealloc(count);
   }
@@ -627,8 +613,7 @@ public:
   /* Operations */
 
   void merge(list &&other) {
-    if (this == &other)
-      return;
+    if (this == &other) return;
 
     node_ptr start = head;
     node_ptr o_start = other.head;
@@ -649,8 +634,7 @@ public:
   }
 
   void splice(const_iterator pos, list &&other) {
-    if (other.empty())
-      return;
+    if (other.empty()) return;
     if (empty()) {
       head = other.head;
       tail = other.tail;
@@ -696,8 +680,7 @@ public:
   }
 
   void reverse() noexcept {
-    if (head == nullptr || head->next == nullptr)
-      return;
+    if (head == nullptr || head->next == nullptr) return;
     node_ptr curr = head;
     node_ptr next = nullptr;
     while (curr != nullptr) {
@@ -729,10 +712,9 @@ public:
 
   void sort() { head = MergeSort(head); }
 
-private:
+ private:
   node_ptr MergeSort(node_ptr head_) {
-    if (head_ == nullptr || head_->next == nullptr)
-      return head_;
+    if (head_ == nullptr || head_->next == nullptr) return head_;
 
     node_ptr middle = GetMiddle(head_, nullptr);
     node_ptr nextToMiddle = middle->next;
@@ -785,8 +767,7 @@ private:
       rightHead->prev = tail_;
     }
 
-    while (tail_->next != nullptr)
-      tail_ = tail_->next;
+    while (tail_->next != nullptr) tail_ = tail_->next;
 
     tail_->next = nullptr;
     tail = tail_;
@@ -803,18 +784,17 @@ private:
         tmp->next = nullptr;
         tail = tmp;
       }
-      if (sz == 0)
-        head = tail = nullptr;
+      if (sz == 0) head = tail = nullptr;
     }
   }
 
-private:
+ private:
   list_node<T, A> *head;
   list_node<T, A> *tail;
   size_type sz;
   A allocator;
   NodeAllocator allo;
 };
-} // namespace s21
+}  // namespace s21
 
-#endif // _list_
+#endif  // _list_

@@ -58,8 +58,7 @@ namespace s21 {
 
         void pop() { c.pop_back(); }
 
-        void swap( stack& other ) noexcept {
-        }
+        void swap( stack& other ) noexcept { std::swap(c, other.c); }
 	
         void print() {
           for (auto i : c)
@@ -70,6 +69,6 @@ namespace s21 {
       private:
         Container c;
     };
-}
+} // namespace s21
 
 #endif // _stack_

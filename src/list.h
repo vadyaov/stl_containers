@@ -1,6 +1,7 @@
 #ifndef _list_
 #define _list_
 
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <initializer_list>
@@ -713,6 +714,13 @@ class list {
   }
 
   void sort() { head = MergeSort(head); }
+
+  void print() {
+    for (auto i: *this)
+      std::cout << " " << i;
+    std::cout << std::endl;
+  }
+
 
  private:
   node_ptr MergeSort(node_ptr head_) {

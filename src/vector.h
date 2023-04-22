@@ -1,6 +1,7 @@
 #ifndef _vector_
 #define _vector_
 
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <initializer_list>
@@ -510,8 +511,8 @@ class vector {
   reference front() { return iterator(vb.elem)[0]; }
   const_reference front() const { return const_iterator(vb.elem)[0]; }
 
-  reference back() { return iterator(vb.space - 1)[size()]; }
-  const_reference back() const { return const_iterator(vb.space - 1)[size()]; }
+  reference back() { return *iterator(vb.space - 1); }
+  const_reference back() const { return *const_iterator(vb.space - 1); }
 
   pointer data() noexcept { return vb.elem; }
   const_pointer data() const noexcept { return vb.elem; }
@@ -636,10 +637,15 @@ class vector {
 
     const difference_type index = pos - begin();
     if (capacity() == size()) reserve(2 * capacity());
-    std::move_backward(pos, end(), end() + 1);
+    std::move_backward(begin() + index, end(), end() + 1);
     vb.alloc.construct(vb.elem + index, std::forward<Args>(args)...);
     vb.space++;
     return begin() + index;
+  }
+
+  template <class... Args>
+  reference emplace_back(Args&&... args) {
+    return *emplace(iterator(vb.space), args...);
   }
 
   iterator erase(iterator pos) {

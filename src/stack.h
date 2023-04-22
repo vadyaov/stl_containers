@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include "vector.h"
+#include "list.h"
 
 namespace s21 {
 
@@ -29,8 +30,7 @@ namespace s21 {
           return *this;
         }
 
-        stack( stack&& other ) noexcept : c{std::move(other.c)} {
-        }
+        stack( stack&& other ) noexcept : c{std::move(other.c)} {}
 
         stack& operator=( stack&& other ) {
           c = std::move(other.c);
@@ -39,30 +39,24 @@ namespace s21 {
 
         ~stack() = default;
 
-        reference top() {
-        }
+        reference top() { return c.back(); }
 
-        const_reference top() const {
-        }
+        const_reference top() const { return c.back(); }
 
-        bool empty() const {
-        }
+        bool empty() const { return c.empty(); }
 
-        size_type size() const {
-        }
+        size_type size() const { return c.size(); }
 
-        void push( const value_type& value ) {
-        }
+        void push( const value_type& value ) { c.push_back(value); }
 
-        void push( value_type&& value ) {
-        }
+        void push( value_type&& value ) { c.push_back(std::move(value)); }
 
         template< class... Args >
           void emplace( Args&&... args ) {
+            c.emplace_back(std::forward<Args>(args)...);
           }
 
-        void pop() {
-        }
+        void pop() { c.pop_back(); }
 
         void swap( stack& other ) noexcept {
         }
@@ -72,7 +66,6 @@ namespace s21 {
             std::cout << " " << i;
           std::cout << std::endl;
         }
-
 
       private:
         Container c;

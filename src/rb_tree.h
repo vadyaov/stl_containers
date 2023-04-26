@@ -90,10 +90,11 @@ template<
       }
       fixTree(t);
     }
+
     void remove(const K& key);
     V find(const K& key);
     
-    void empty() {
+    bool empty() {
       return root == nullptr;
     }
     
@@ -102,20 +103,67 @@ template<
     Allocator alloc;
     Compare comp;
 
+    node_ptr grandparent(node_ptr n) {
+      if (n != nullptr && n->parent != nullptr)
+        return n->parent->parent;
+
+      return nullptr;
+    }
+
+    node_ptr uncle(node_ptr n) {
+      node_ptr grandpa = grandparent(n);
+      if (nullptr == grandpa) // no grandparent = no uncle
+        return nullptr;
+      if (n->parent == grandpa->left)
+        return grandpa->right;
+      else
+        return grandpa->left;
+    }
+
     // implement this for correct fixTree
-    void rotateLeft(node_ptr node);
-    void rotateRight(node_ptr node);
+    void rotateLeft(node_ptr node) {
+      node_ptr base = node->right;
+
+      base->parent = node->parent; // base can be the root
+      if (node->parent != nullptr) {
+        if (node->parent->left == node)
+          node->parent->left = base;
+        else
+          node->parent->right = base;
+      }
+
+      node->right = base->left;
+      if (base->left != nullptr)
+        base->left->parent = node;
+      
+      node->parent = base;
+      base->left = node;
+    }
+
+    void rotateRight(node_ptr node) {
+      node_ptr base = node->left;
+
+      base->parent = node->parent;
+      if (node->parent != nullptr) {
+        if (node->parent->left == node)
+          node->parent->left = base;
+        else
+          node->parent->right = base;
+      }
+
+      node->left = base->right;
+      if (base->right != nullptr)
+        base->right->parent = node;
+
+      node->parent = base;
+      base->right = node;
+    }
 
     // balance checking after tree changed
     void fixTree(node_ptr node) {
-      // если node - корень, красим корень в черный (2)
-      if (nullptr == node->parent) {
-        node->color = Color::BLACK;
-        return;
-      }
       // если отец node - черный, никакое свойство дерева не нарушено
       // если красный - нарушается (3)
-      while (node->parent->color == Color::RED) {
+      while (node->parent && node->parent->color == Color::RED) {
 
         // достаточно рассмотреть 2 случая
         // 1: дядя node тоже красный
@@ -162,6 +210,7 @@ template<
           }
         }
       }
+      // корень всегда черный; если node был корнем, то в цикл не зашли и сразу попали сюда
       root->color = Color::BLACK;
     }
 };

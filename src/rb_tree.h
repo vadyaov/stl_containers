@@ -70,6 +70,15 @@ template<
         printHelper(root, "", true);
     }
 
+    void printSimmetric(node_ptr node) {
+      if (node == nullptr) return;
+
+      printSimmetric(node->left);
+      std::cout << " " << node->key;
+      printSimmetric(node->right);
+
+    }
+
     void printHelper(node_ptr root, std::string indent, bool last) {
       if (root != nullptr) {
       std::cout << indent;
@@ -126,14 +135,18 @@ template<
       if (empty()) return;
       node_ptr tmp = root;
 
-      while (tmp->key != key) {
+      while (tmp != nullptr && tmp->key != key) {
         if (comp(key, tmp->key))
           tmp = tmp->left;
         else
           tmp = tmp->right;
       }
 
-      /* tmp->printData(); */
+      if (tmp == nullptr) {
+        std::cout << "Can't find Node with key " << key << std::endl;
+        return;
+      }
+
       removeNode(tmp);
 
     }
@@ -317,59 +330,207 @@ template<
       root->color = Color::BLACK;
     }
 
+    /* 1. RED node, 2 children --> RED node, 0||1 child
+     * 2. BLACK node, 2 children --> BLACK node, 0||1 child
+     * 3. RED node, 1 child --> doesn't exist
+     * 4. BLACK node, 1 child --> свапаем с красным ребенком и удаляем ребенка
+     * 5. RED node, 0 child --> удаляем node, указатель у родителя - nullptr
+     * 6. BLACK node, 0 child --> удаляем node, указатель у родителя - nullptr
+     * 
+     *  Если удаляемый элемент был черным - нужна балансировка
+     */
     void removeNode(node_ptr node) {
-      // если у node нет детей
-      if (node->left == nullptr && node->right == nullptr) {
-        if (node == root) {
+      // case 5 && 6
+      if (noChildren(node)) {
+        node_ptr node_brother = nullptr;
+        if (node->parent == nullptr)
           root = nullptr;
-        } else {
-          if (node->parent->left == node)
+        else
+          if (node->parent->left == node) {
             node->parent->left = nullptr;
-          else
+            node_brother = node->parent->right;
+          } else {
             node->parent->right = nullptr;
-        }
+            node_brother = node->parent->left;
+          }
+
+        Color node_color = node->color;
         alloc.deallocate(node, 1);
-        return;
-      }
-
-      node_ptr y = nullptr;
-      node_ptr q = nullptr;
-
-      // если у node один ребенок
-      if (oneChild(node)) {
-
-          if (node->parent->left == node)
-            node->parent->left = node->left == nullptr ? node->right : node->left;
-          else
-            node->parent->right = node->left == nullptr ? node->right : node->left;
-        
-      alloc.deallocate(node, 1);
-      } else { // имеются оба ребенка
-        // находим либо наибольший элемент в левом поддереве, либо наименьший в правом.
-        // я буду искать наименьший в правом
-        y = rightMin(node); // нет левого ребенка!
-        if (y->right != nullptr)
-          y->right->parent = y->parent;
-        if (y == root) // не представляю ситуацию в которой y оказывается корнем
-          root = y->right;
-        else {
-          if (y->parent->left == y)
-            y->parent->left = y->right;
-          else
-            y->parent->right = y->right;
+        if (root != nullptr && node_color == Color::BLACK) {
+          fixDeleting(node->parent, node_brother);
         }
       }
-      
-      if (y != node) {
-        node->color = y->color;
-        node->key = y->key;
-        node->value = y->value;
-      }
-      Color y_color = y->color;
-      alloc.deallocate(y, 1);
-      /* if (y_color == Color::BLACK) */
-        /* fixDeleting(); */
 
+      // case 3 && 4
+      else if (oneChild(node)) {
+        // это может быть только черный элемент с красным ребенком без детей
+        node_ptr child = node->left == nullptr ? node->right : node->left;
+
+        node->key = child->key;
+        node->value = child->value;
+
+        if (child == node->left) node->left = nullptr;
+        else node->right = nullptr;
+
+        alloc.deallocate(child, 1);
+
+        // балансировку делать не нужно, т.к. child точно красный
+      }
+
+      // case 1 && 2
+      else {
+        std::cout << "\nNode have 2 children.\n";
+        node_ptr rMin = rightMin(node);
+
+        node->key = rMin->key;
+        node->value = rMin->value;
+
+        removeNode(rMin);
+      }
+
+    }
+
+    bool noChildren(node_ptr node) {
+      return node->left == nullptr && node->right == nullptr;
+    }
+
+    /* void removeNode(node_ptr node) { */
+    /*   // если у node нет детей, изменяем указатель на node у родителя на nullptr */
+    /*   if (node->left == nullptr && node->right == nullptr) { */
+    /*     if (node == root) { */
+    /*       root = nullptr; */
+    /*     } else { */
+    /*       if (node->parent->left == node) */
+    /*         node->parent->left = nullptr; */
+    /*       else */
+    /*         node->parent->right = nullptr; */
+    /*     } */
+    /*     alloc.deallocate(node, 1); */
+    /*     return; */
+    /*   } */
+
+    /*   node_ptr y = node; */
+    /*   node_ptr q = y->parent; */
+
+    /*   // если у 'y' один ребенок -> указатель на 'y' у родителя меняем на ребенка */
+    /*   if (oneChild(node)) { */
+
+    /*       if (y->parent->left == node) */
+    /*         y->parent->left = y->left == nullptr ? y->right : y->left; */
+    /*       else */
+    /*         y->parent->right = y->left == nullptr ? y->right : y->left; */
+        
+    /*     alloc.deallocate(node, 1); */
+    /*   } else { // имеются оба ребенка */
+    /*     // находим либо наибольший элемент в левом поддереве, либо наименьший в правом. */
+    /*     // я буду искать наименьший в правом */
+    /*     y = rightMin(node); // у 'y' нем может быть левого ребенка! */
+    /*     q = y->parent; */
+    /*     if (y->right != nullptr) */
+    /*       y->right->parent = y->parent; */
+    /*     if (y == root) // не представляю ситуацию в которой 'y' оказывается корнем */
+    /*       root = y->right; */
+    /*     else { // у родителя указатель на 'y' меняем на указатель на правого ребенка 'y'(мб null) */
+    /*       if (y->parent->left == y) */
+    /*         y->parent->left = y->right; */
+    /*       else */
+    /*         y->parent->right = y->right; */
+    /*     } */
+    /*   } */
+      
+    /*   if (y != node) { */
+    /*     node->color = y->color; */
+    /*     node->key = y->key; */
+    /*     node->value = y->value; */
+    /*   } */
+
+    /*   // запомниаем цвет удаляемого узла и его родителя */
+    /*   Color y_color = y->color; */
+    /*   alloc.deallocate(y, 1); */
+    /*   // при удалении черной вершины могла быть нарушена балансировка */
+    /*   if (y_color == Color::BLACK) */
+    /*     fixDeleting(q); */
+
+    /* } */
+
+    // node - parent удаленного узла
+    void fixDeleting(node_ptr node, node_ptr brother) {
+      std::cout << "\nInside FixDeleting...\n";
+
+/*       node_ptr bro = node->left == nullptr ? node->right : node->left; */
+
+/*       std::cout << "BRO:\n"; */
+/*       bro->printData(); */
+
+/*       std::cout << "BROTHER:\n"; */
+/*       brother->printData(); */
+
+      // case 1: node RED (получается один из потомков обязательно nullptr,
+      //                         оставшийся потомок - брат удаленного узла)
+      //         brother BLACK with BLACK childrens
+      if (isRed(node) && isBlack(brother) && isBlack(brother->left) &&
+          isBlack(brother->right)) {
+        node->color = Color::BLACK;
+        brother->color = Color::RED;
+      } else if (isRed(node) && isBlack(brother) && oneChildRed(brother)) {
+        if (brother == node->left && isRed(brother->left)) {
+            std::cout << "KCH2 for x right\n";
+            node->color = Color::BLACK;
+            brother->color = Color::RED;
+            brother->left->color = Color::BLACK;
+            rotateRight(node);
+        } else if (brother == node->right && isRed(brother->right)) {
+            std::cout << "KCH2 for x left\n";
+            node->color = Color::BLACK;
+            brother->color = Color::RED;
+            brother->right->color = Color::BLACK;
+            rotateLeft(node);
+        }
+      } else if (node->color == Color::BLACK && isRed(brother)) {
+        // ЧК3
+        if (brother == node->left && brother->right != nullptr &&
+            isBlack(brother->right->left) && isBlack(brother->right->right)) {
+          std::cout << "!!!!\n";
+          brother->color = Color::BLACK;
+          brother->right->color = Color::RED;
+          rotateRight(node);
+        } else if (brother == node->right && brother->left != nullptr &&
+            isBlack(brother->left->left) && isBlack(brother->left->right)) {
+          brother->color = Color::BLACK;
+          brother->left->color = Color::RED;
+          rotateLeft(node);
+          // ЧК4
+        } else if (brother == node->left && brother->right != nullptr &&
+            isRed(brother->right->left)) {
+            brother->right->left->color = Color::BLACK;
+            rotateLeft(brother);
+            rotateRight(node);
+        } else if (brother == node->right && brother->left != nullptr &&
+            isRed(brother->left->right)) {
+            brother->left->right->color = Color::BLACK;
+            rotateRight(brother);
+            rotateLeft(node);
+        }
+      } else if (isBlack(node) && isBlack(brother)) {
+        if (brother == node->left && isRed(brother->right)) {
+          brother->right->color = Color::BLACK;
+          rotateLeft(brother);
+          rotateRight(node);
+        } else if (brother == node->right && isRed(brother->left)) {
+          brother->left->color = Color::BLACK;
+          rotateRight(brother);
+          rotateLeft(node);
+        }
+      } else if (isBlack(node) && isBlack(brother) &&
+                 isBlack(brother->left) && isBlack(brother->right)) {
+        brother->color = Color::RED;
+        std::cout << "\nRecursion....\n";
+        if (node->parent != nullptr) {
+          node_ptr node_brother = node->parent->right == node ?
+                                  node->parent->left : node->parent->right;
+          fixDeleting(node->parent, node_brother);
+        }
+      }
     }
 
     bool oneChild(node_ptr node) {
@@ -391,6 +552,16 @@ template<
 
     bool isRed(node_ptr node) {
       return node != nullptr && node->color == Color::RED;
+    }
+
+    bool isBlack(node_ptr node) {
+      // because list node is always black
+      return node == nullptr || node->color == Color::BLACK;
+      /* return node != nullptr && node->color == Color::BLACK; */
+    }
+
+    bool oneChildRed(node_ptr node) {
+      return isRed(node->left) || isRed(node->right);
     }
 
 

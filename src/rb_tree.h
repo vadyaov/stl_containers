@@ -29,7 +29,9 @@ struct RBNode {
   Color color;
   explicit RBNode(K k, V v, Color c = Color::RED) :
     key{k}, value{v}, left{nullptr}, right{nullptr}, parent {nullptr}, color{c} {}
+
   void printData() {
+    if (this == nullptr) return;
     std::cout << "\naddressNode = " << this << "\nkey = " << key << "\nvalue = " << value
               << "\nright* = " << right << "\nleft* = " << left
               << "\nparent* = " << parent;
@@ -39,6 +41,56 @@ struct RBNode {
     else if (color == Color::BLACK)
       std::cout << "BLACK\n";
   }
+
+  RBNode* min() {
+    return left == nullptr ? this : left->min();
+  }
+
+  RBNode* max() {
+    return right == nullptr ? this : right->max();
+  }
+
+  RBNode* successor() {
+    RBNode* succ = this;
+    if (succ != nullptr) {
+
+      if (succ->right != nullptr) {
+        succ = succ->right;
+        while (succ->left != nullptr)
+          succ = succ->left;
+      } else if (succ->parent != nullptr && succ == succ->parent->left) {
+        succ == succ->parent;
+      } else {
+        while (succ->parent != nullptr && succ == succ->parent->right)
+          succ = succ->parent;
+        succ = succ->parent;
+      }
+
+    }
+    return succ;
+  }
+
+  RBNode* predesessor() {
+    RBNode *pred = this;
+
+    if (pred != nullptr) {
+
+      if (pred->left != nullptr) {
+        pred = pred->left;
+        while (pred->right != nullptr)
+          pred = pred->right;
+      } else if (pred->parent != nullptr && pred == pred->parent->right) {
+        pred = pred->parent;
+      } else {
+        while (pred->parent != nullptr && pred == pred->parent->left)
+          pred = pred->parent;
+        pred = pred->parent;
+      }
+
+    }
+
+    return pred;
+  }
 };
 
 template<
@@ -47,12 +99,73 @@ template<
   class Compare = std::less<K>,
   class Allocator = std::allocator<RBNode<K, V>>
 > class RBTree {
-  public:
     typedef RBNode<K, V>* node_ptr;
+    node_ptr root;
+    Allocator alloc;
+    Compare comp;
+
+  public:
+    /* typedef typename Allocator::reference reference; */
+    class iterator {
+   public:
+    iterator() : ptr{nullptr} {}
+    explicit iterator(node_ptr p) : ptr{p} {
+      std::cout << "inside ctor\n";
+    }
+    iterator(const iterator &iter) : ptr{iter.ptr} {}
+    ~iterator() { ptr = nullptr; }
+
+    iterator &operator=(const iterator &other) {
+      ptr = other.ptr;
+      return *this;
+    }
+
+    bool operator==(const iterator &other) const { return ptr == other.ptr; }
+    bool operator!=(const iterator &other) const { return ptr != other.ptr; }
+
+    iterator &operator++() {
+      ptr = ptr->successor();
+      return *this;
+    }
+
+    iterator operator++(int) {
+      iterator tmp = *this;
+      ptr = ptr->successor();
+      return tmp;
+    }
+
+    iterator &operator--() {
+      ptr = ptr->predesessor();
+      return *this;
+    }
+
+    iterator operator--(int) {
+      iterator tmp = *this;
+      ptr = ptr->predesessor();
+      return tmp;
+    }
+
+    std::pair<K, V> operator*() const {
+      return std::pair<K, V>(ptr->key, ptr->value);
+    }
+
+    node_ptr get_ptr() const { return ptr; }
+
+   private:
+    node_ptr ptr;
+    };
 
     RBTree() : root{nullptr}, alloc{}, comp{} {}
 
-    /* RBTree(const RBTree& other) {} */
+    RBTree(const RBTree& other) : alloc{other.alloc}, comp{other.comp}, root{nullptr} {
+      if (other.empty() == false) {
+          std::cout << "!\n";
+        for (iterator i = begin(); i != end(); ++i) {
+          std::cout << "!\n";
+          insert(*i);
+        }
+      }
+    }
 
     /* RBTree(RBTree&& other) noexcept {} */
 
@@ -79,27 +192,24 @@ template<
 
     }
 
-    void printHelper(node_ptr root, std::string indent, bool last) {
-      if (root != nullptr) {
-      std::cout << indent;
-        if (last) {
-          std::cout << "R----";
-          indent += "   ";
-        } else {
-          std::cout << "L----";
-          indent += "|  ";
-        }
-
-        std::string sColor = root->color == Color::RED ? "RED" : "BLACK";
-        std::cout << root->key << "(" << sColor << ")" << std::endl;
-        printHelper(root->left, indent, false);
-        printHelper(root->right, indent, true);
-      }
+    iterator begin() noexcept {
+      std::cout << "begin\n";
+      std::cout << root->min(); //->printData();
+      return iterator(root->min());
     }
 
-    void insert(const K& key, const V& value) {
+    /* const_iterator begin() const noexcept { */
+    /*   return const_iterator(root); */
+    /* } */
+
+    iterator end() noexcept {
+      std::cout << "end\n";
+      return iterator();
+    }
+
+    void insert(const std::pair<const K, V>& value) {
       node_ptr t = alloc.allocate(1);
-      alloc.construct(t, RBNode<K, V>(key, value));
+      alloc.construct(t, RBNode<K, V>(value.first, value.second));
       if (empty()) {
         t->color = Color::BLACK;
         root = t;
@@ -151,9 +261,27 @@ template<
 
     }
 
-    V find(const K& key);
+    // iterator here and return end() if no key found
+    V find(const K& key) {
+      if (empty()) throw std::runtime_error("RBTree is empty");
+
+      node_ptr tmp = root;
+      while (tmp != nullptr && tmp->key != key) {
+        if (comp(key, tmp->key))
+          tmp = tmp->left;
+        else
+          tmp = tmp->right;
+      }
+
+      if (tmp == nullptr) {
+        std::cout << "Can't find Node with key " << key << std::endl;
+        return;
+      }
+
+      return tmp->value;
+    }
     
-    bool empty() {
+    bool empty() const {
       return root == nullptr;
     }
 
@@ -202,10 +330,6 @@ template<
  } 
     
   private:
-    node_ptr root;
-    Allocator alloc;
-    Compare comp;
-
 
     node_ptr grandparent(node_ptr n) {
       if (n != nullptr && n->parent != nullptr)
@@ -373,7 +497,6 @@ template<
         else node->right = nullptr;
 
         alloc.deallocate(child, 1);
-
         // балансировку делать не нужно, т.к. child точно красный
       }
 
@@ -394,65 +517,6 @@ template<
       return node->left == nullptr && node->right == nullptr;
     }
 
-    /* void removeNode(node_ptr node) { */
-    /*   // если у node нет детей, изменяем указатель на node у родителя на nullptr */
-    /*   if (node->left == nullptr && node->right == nullptr) { */
-    /*     if (node == root) { */
-    /*       root = nullptr; */
-    /*     } else { */
-    /*       if (node->parent->left == node) */
-    /*         node->parent->left = nullptr; */
-    /*       else */
-    /*         node->parent->right = nullptr; */
-    /*     } */
-    /*     alloc.deallocate(node, 1); */
-    /*     return; */
-    /*   } */
-
-    /*   node_ptr y = node; */
-    /*   node_ptr q = y->parent; */
-
-    /*   // если у 'y' один ребенок -> указатель на 'y' у родителя меняем на ребенка */
-    /*   if (oneChild(node)) { */
-
-    /*       if (y->parent->left == node) */
-    /*         y->parent->left = y->left == nullptr ? y->right : y->left; */
-    /*       else */
-    /*         y->parent->right = y->left == nullptr ? y->right : y->left; */
-        
-    /*     alloc.deallocate(node, 1); */
-    /*   } else { // имеются оба ребенка */
-    /*     // находим либо наибольший элемент в левом поддереве, либо наименьший в правом. */
-    /*     // я буду искать наименьший в правом */
-    /*     y = rightMin(node); // у 'y' нем может быть левого ребенка! */
-    /*     q = y->parent; */
-    /*     if (y->right != nullptr) */
-    /*       y->right->parent = y->parent; */
-    /*     if (y == root) // не представляю ситуацию в которой 'y' оказывается корнем */
-    /*       root = y->right; */
-    /*     else { // у родителя указатель на 'y' меняем на указатель на правого ребенка 'y'(мб null) */
-    /*       if (y->parent->left == y) */
-    /*         y->parent->left = y->right; */
-    /*       else */
-    /*         y->parent->right = y->right; */
-    /*     } */
-    /*   } */
-      
-    /*   if (y != node) { */
-    /*     node->color = y->color; */
-    /*     node->key = y->key; */
-    /*     node->value = y->value; */
-    /*   } */
-
-    /*   // запомниаем цвет удаляемого узла и его родителя */
-    /*   Color y_color = y->color; */
-    /*   alloc.deallocate(y, 1); */
-    /*   // при удалении черной вершины могла быть нарушена балансировка */
-    /*   if (y_color == Color::BLACK) */
-    /*     fixDeleting(q); */
-
-    /* } */
-
     // node - parent удаленного узла
     void fixDeleting(node_ptr node, node_ptr brother) {
       std::cout << "\nInside FixDeleting...\n";
@@ -465,22 +529,17 @@ template<
 /*       std::cout << "BROTHER:\n"; */
 /*       brother->printData(); */
 
-      // case 1: node RED (получается один из потомков обязательно nullptr,
-      //                         оставшийся потомок - брат удаленного узла)
-      //         brother BLACK with BLACK childrens
       if (isRed(node) && isBlack(brother) && isBlack(brother->left) &&
           isBlack(brother->right)) {
         node->color = Color::BLACK;
         brother->color = Color::RED;
       } else if (isRed(node) && isBlack(brother) && oneChildRed(brother)) {
         if (brother == node->left && isRed(brother->left)) {
-            std::cout << "KCH2 for x right\n";
             node->color = Color::BLACK;
             brother->color = Color::RED;
             brother->left->color = Color::BLACK;
             rotateRight(node);
         } else if (brother == node->right && isRed(brother->right)) {
-            std::cout << "KCH2 for x left\n";
             node->color = Color::BLACK;
             brother->color = Color::RED;
             brother->right->color = Color::BLACK;
@@ -490,7 +549,6 @@ template<
         // ЧК3
         if (brother == node->left && brother->right != nullptr &&
             isBlack(brother->right->left) && isBlack(brother->right->right)) {
-          std::cout << "!!!!\n";
           brother->color = Color::BLACK;
           brother->right->color = Color::RED;
           rotateRight(node);
@@ -520,17 +578,16 @@ template<
           brother->left->color = Color::BLACK;
           rotateRight(brother);
           rotateLeft(node);
+        } else if (isBlack(brother->left) && isBlack(brother->right)) {
+          brother->color = Color::RED;
+          std::cout << "\nRecursion....\n";
+          if (node->parent != nullptr) {
+            node_ptr node_brother = node->parent->right == node ?
+                                    node->parent->left : node->parent->right;
+            fixDeleting(node->parent, node_brother);
+          }
         }
-      } else if (isBlack(node) && isBlack(brother) &&
-                 isBlack(brother->left) && isBlack(brother->right)) {
-        brother->color = Color::RED;
-        std::cout << "\nRecursion....\n";
-        if (node->parent != nullptr) {
-          node_ptr node_brother = node->parent->right == node ?
-                                  node->parent->left : node->parent->right;
-          fixDeleting(node->parent, node_brother);
-        }
-      }
+      } 
     }
 
     bool oneChild(node_ptr node) {
@@ -564,6 +621,23 @@ template<
       return isRed(node->left) || isRed(node->right);
     }
 
+    void printHelper(node_ptr root, std::string indent, bool last) {
+      if (root != nullptr) {
+      std::cout << indent;
+        if (last) {
+          std::cout << "R----";
+          indent += "   ";
+        } else {
+          std::cout << "L----";
+          indent += "|  ";
+        }
+
+        std::string sColor = root->color == Color::RED ? "RED" : "BLACK";
+        std::cout << root->key << "(" << sColor << ")" << std::endl;
+        printHelper(root->left, indent, false);
+        printHelper(root->right, indent, true);
+      }
+    }
 
 };
 

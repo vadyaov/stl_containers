@@ -2,31 +2,34 @@
 #include <map>
 
 int main() {
-  RBTree<int, int> tree;
-  tree.insert(std::pair<int, int>(20, 0));
-  tree.insert(std::pair<int, int>(10, 1));
-  tree.insert(std::pair<int, int>(25, 2));
-  tree.insert(std::pair<int, int>(4, 3));
-  tree.insert(std::pair<int, int>(16, 4));
-  /* tree.insert(23, 5); */
-  tree.insert(std::pair<int, int>(30, 5));
-  tree.insert(std::pair<int, int>(21, 5));
-  tree.insert(std::pair<int, int>(24, 5));
-  tree.insert(std::pair<int, int>(31, 5));
-  tree.insert(std::pair<int, int>(48, 5));
-  tree.insert(std::pair<int, int>(2, -10));
-  tree.insert(std::pair<int, int>(-1, -10));
-  tree.insert(std::pair<int, int>(9, 5));
-  tree.insert(std::pair<int, int>(14, -1));
-  tree.insert(std::pair<int, int>(17, 15));
-  tree.insert(std::pair<int, int>(1, 15));
-  tree.insert(std::pair<int, int>(12, 15));
-  tree.insert(std::pair<int, int>(15, 15));
-  tree.insert(std::pair<int, int>(19, 15));
-  tree.insert(std::pair<int, int>(-10, 15));
-  tree.insert(std::pair<int, int>(7, 15));
-  tree.insert(std::pair<int, int>(8, 15));
-  tree.insert(std::pair<int, int>(13, 15));
+
+  typedef typename std::pair<int, int> pair;
+
+  RBTree<int, int> tree; //{pair(20, 0), pair(10, 1), pair(25, 3), pair(4,4)};
+  tree.insert(pair(20, 0));
+  tree.insert(pair(10, 1));
+  tree.insert(pair(25, 2));
+  tree.insert(pair(4, 3));
+  tree.insert(pair(16, 4));
+  tree.insert(pair(23, 5));
+  tree.insert(pair(30, 5));
+  tree.insert(pair(21, 5));
+  tree.insert(pair(24, 5));
+  tree.insert(pair(31, 5));
+  tree.insert(pair(48, 5));
+  tree.insert(pair(2, -10));
+  tree.insert(pair(-1, -10));
+  tree.insert(pair(9, 5));
+  tree.insert(pair(14, -1));
+  tree.insert(pair(17, 15));
+  tree.insert(pair(1, 15));
+  tree.insert(pair(12, 15));
+  tree.insert(pair(15, 15));
+  tree.insert(pair(19, 15));
+  tree.insert(pair(-10, 15));
+  tree.insert(pair(7, 15));
+  tree.insert(pair(8, 15));
+  tree.insert(pair(13, 15));
 
   /* tree.remove(30); */
   /* tree.remove(48); */
@@ -37,16 +40,19 @@ int main() {
   tree.printSimmetric(tree.get_root());
   std::cout << std::endl;
 
-  std::cout << "ASSERT: " << tree.rb_assert(tree.get_root());
+  std::cout << "ASSERT: " << tree.rb_assert(tree.get_root()) << std::endl;
+
+  std::cout << tree[55] << std::endl;
+
 
   /* RBTree<int, int>::iterator it = tree.begin(); */
   /* std::cout << (*it).first << std::endl; */
-  RBTree<int, int> treecpy{tree};
+  /* RBTree<int, int> treecpy =tree; */
 
   /* treecpy.printTree(); */
   /* std::cout << std::endl; */
 
-  /* treecpy.printSimmetric(tree.get_root()); */
+  /* treecpy.printSimmetric(treecpy.get_root()); */
   /* std::cout << std::endl; */
 
   /* std::cout << "ASSERT: " << treecpy.rb_assert(tree.get_root()); */

@@ -31,7 +31,6 @@ struct RBNode {
     key{k}, value{v}, left{nullptr}, right{nullptr}, parent {nullptr}, color{c} {}
 
   void printData() {
-    if (this == nullptr) return;
     std::cout << "\naddressNode = " << this << "\nkey = " << key << "\nvalue = " << value
               << "\nright* = " << right << "\nleft* = " << left
               << "\nparent* = " << parent;
@@ -43,7 +42,8 @@ struct RBNode {
   }
 
   RBNode* min() {
-    return left == nullptr ? this : left->min();
+    if (left == nullptr) return this;
+    return left->min();
   }
 
   RBNode* max() {
@@ -59,7 +59,7 @@ struct RBNode {
         while (succ->left != nullptr)
           succ = succ->left;
       } else if (succ->parent != nullptr && succ == succ->parent->left) {
-        succ == succ->parent;
+        succ = succ->parent;
       } else {
         while (succ->parent != nullptr && succ == succ->parent->right)
           succ = succ->parent;
@@ -105,13 +105,23 @@ template<
     Compare comp;
 
   public:
-    /* typedef typename Allocator::reference reference; */
+    typedef K key_type;
+    typedef V mapped_type;
+    typedef std::pair<const K, V> value_type;
+    typedef std::size_t size_type;
+    typedef std::ptrdiff_t difference_type;
+    typedef Compare key_compare;
+    typedef Allocator allocator_type;
+    typedef value_type& reference;
+    typedef const value_type& const_reference;
+    typedef typename std::allocator_traits<Allocator>::pointer pointer;
+    typedef typename std::allocator_traits<Allocator>::const_pointer const_pointer;
+    typedef RBNode<K, V> node_type;
+
     class iterator {
    public:
     iterator() : ptr{nullptr} {}
-    explicit iterator(node_ptr p) : ptr{p} {
-      std::cout << "inside ctor\n";
-    }
+    explicit iterator(node_ptr p) : ptr{p} {}
     iterator(const iterator &iter) : ptr{iter.ptr} {}
     ~iterator() { ptr = nullptr; }
 
@@ -145,7 +155,57 @@ template<
       return tmp;
     }
 
-    std::pair<K, V> operator*() const {
+    std::pair<K, V>& operator*() const {
+      return std::pair<K, V>(ptr->key, ptr->value);
+    }
+
+    node_ptr get_ptr() const { return ptr; }
+
+   private:
+    node_ptr ptr;
+    };
+
+    class const_iterator {
+   public:
+    const_iterator() : ptr{nullptr} {}
+    explicit const_iterator(node_ptr p) : ptr{p} {
+    }
+
+    explicit const_iterator(const const_iterator &iter) : ptr{iter.ptr} {}
+
+    ~const_iterator() { ptr = nullptr; }
+
+    const_iterator &operator=(const const_iterator &other) {
+      ptr = other.ptr;
+      return *this;
+    }
+
+    bool operator==(const const_iterator &other) const { return ptr == other.ptr; }
+    bool operator!=(const const_iterator &other) const { return ptr != other.ptr; }
+
+    const_iterator &operator++() {
+      ptr = ptr->successor();
+      return *this;
+    }
+
+    const_iterator operator++(int) {
+      const_iterator tmp = *this;
+      ptr = ptr->successor();
+      return tmp;
+    }
+
+    const_iterator &operator--() {
+      ptr = ptr->predesessor();
+      return *this;
+    }
+
+    const_iterator operator--(int) {
+      const_iterator tmp = *this;
+      ptr = ptr->predesessor();
+      return tmp;
+    }
+
+    std::pair<K, V>& operator*() const {
       return std::pair<K, V>(ptr->key, ptr->value);
     }
 
@@ -157,25 +217,39 @@ template<
 
     RBTree() : root{nullptr}, alloc{}, comp{} {}
 
-    RBTree(const RBTree& other) : alloc{other.alloc}, comp{other.comp}, root{nullptr} {
-      if (other.empty() == false) {
-          std::cout << "!\n";
-        for (iterator i = begin(); i != end(); ++i) {
-          std::cout << "!\n";
-          insert(*i);
-        }
-      }
+    RBTree(const RBTree& other) : root{nullptr}, alloc{other.alloc}, comp{other.comp} {
+      if (other.root != nullptr)
+        root = copy_node(other.root, nullptr);
     }
 
-    /* RBTree(RBTree&& other) noexcept {} */
+    explicit RBTree(const std::initializer_list<value_type>& ilist) :
+                                                root{nullptr}, alloc{}, comp{} {
+      for (auto i : ilist) insert(i);
+    }
 
-    /* RBTree& operator=(const RBTree& other) { */
-    /* } */
+    RBTree(RBTree&& other) noexcept : root{other.root},
+                                      alloc{std::move(other.alloc)},
+                                      comp{std::move(other.comp)} {
+      other.root = nullptr;
+    }
 
-    /* RBTree& operator=(RBTree&& other) { */
-    /* } */
+    RBTree& operator=(const RBTree& other) {
+      RBTree tmp{other};
+      std::swap(*this, tmp);
+      return *this;
+    }
+
+    RBTree& operator=(RBTree&& other) noexcept {
+      root = other.root;
+      alloc = other.alloc;
+      comp = other.comp;
+      other.root = nullptr;
+      return *this;
+    }
 
     ~RBTree() {
+      delete_node(root);
+      root = nullptr;
     }
 
     void printTree() {
@@ -192,28 +266,52 @@ template<
 
     }
 
+    V& at(const K& key) {
+      node_ptr node = find(key);
+      if (node == nullptr)
+        throw std::out_of_range("Can't find node with 'key'");
+      return node->value;
+    }
+
+    const V& at(const K& key) const {
+      node_ptr node = find(key);
+      if (node == nullptr)
+        throw std::out_of_range("Can't find node with 'key'");
+      return node->value;
+    }
+
+    V& operator[](const K& key) {
+      node_ptr node = find(key);
+      if (node == nullptr) {
+        std::pair<iterator, bool> p = insert(value_type(key, V()));
+        node = p.first.get_ptr();
+      }
+      return node->value;
+    }
+
     iterator begin() noexcept {
-      std::cout << "begin\n";
-      std::cout << root->min(); //->printData();
       return iterator(root->min());
     }
 
-    /* const_iterator begin() const noexcept { */
-    /*   return const_iterator(root); */
-    /* } */
+    const_iterator begin() const noexcept {
+      return const_iterator(root->min());
+    }
 
     iterator end() noexcept {
-      std::cout << "end\n";
       return iterator();
     }
 
-    void insert(const std::pair<const K, V>& value) {
+    const_iterator end() const noexcept {
+      return const_iterator();
+    }
+
+    std::pair<iterator, bool> insert(const std::pair<const K, V>& value, bool unique = true) {
       node_ptr t = alloc.allocate(1);
       alloc.construct(t, RBNode<K, V>(value.first, value.second));
       if (empty()) {
         t->color = Color::BLACK;
         root = t;
-        return;
+        return std::pair<iterator, bool>(iterator(t), true);
       }
         node_ptr p = root;
         node_ptr q = nullptr; // future parent
@@ -226,11 +324,11 @@ template<
             p = p->left;
         }
         // checking for unique
-        if (q->key == t->key) {
+        if (q->key == t->key && unique == true) {
           std::cout << "Not unique key. Skip\n";
           t->printData();
           alloc.deallocate(t, 1);
-          return;
+          return std::pair<iterator, bool>(iterator(q), false);
         }
 
         t->parent = q;
@@ -239,6 +337,7 @@ template<
         else
           q->left = t;
       fixInsertion(t);
+      return std::pair<iterator, bool>(iterator(t), true);
     }
 
     void remove(const K& key) {
@@ -262,7 +361,7 @@ template<
     }
 
     // iterator here and return end() if no key found
-    V find(const K& key) {
+    node_ptr find(const K& key) {
       if (empty()) throw std::runtime_error("RBTree is empty");
 
       node_ptr tmp = root;
@@ -273,12 +372,7 @@ template<
           tmp = tmp->right;
       }
 
-      if (tmp == nullptr) {
-        std::cout << "Can't find Node with key " << key << std::endl;
-        return;
-      }
-
-      return tmp->value;
+      return tmp;
     }
     
     bool empty() const {
@@ -395,7 +489,7 @@ template<
     void fixInsertion(node_ptr node) {
       if (node == root) {
         node->color = Color::BLACK;
-        node->printData();
+        /* node->printData(); */
         return;
       }
 
@@ -639,6 +733,25 @@ template<
       }
     }
 
+    node_ptr copy_node(node_ptr src_node, node_ptr parent) {
+      if (src_node == nullptr) return nullptr;
+
+      node_ptr new_node = alloc.allocate(1);
+      alloc.construct(new_node, RBNode<K, V>{src_node->key, src_node->value, src_node->color});
+      new_node->parent = parent;
+      new_node->left = copy_node(src_node->left, new_node);
+      new_node->right = copy_node(src_node->right, new_node);
+      return new_node;
+    }
+
+    void delete_node(node_ptr start) {
+      if (start == nullptr) return;
+
+      delete_node(start->left);
+      delete_node(start->right);
+
+      alloc.deallocate(start, 1);
+    }
 };
 
 

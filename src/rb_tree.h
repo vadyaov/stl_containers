@@ -29,6 +29,8 @@ struct RBNode {
   Color color;
   explicit RBNode(K k, V v, Color c = Color::RED) :
     key{k}, value{v}, left{nullptr}, right{nullptr}, parent {nullptr}, color{c} {}
+  explicit RBNode(std::pair<K, V> p, Color c = Color::RED) :
+    key{p.first}, value{p.second}, left{nullptr}, right{nullptr}, parent {nullptr}, color{c} {}
 
   void printData() {
     std::cout << "\naddressNode = " << this << "\nkey = " << key << "\nvalue = " << value
@@ -118,102 +120,10 @@ template<
     typedef typename std::allocator_traits<Allocator>::const_pointer const_pointer;
     typedef RBNode<K, V> node_type;
 
-    class iterator {
-   public:
-    iterator() : ptr{nullptr} {}
-    explicit iterator(node_ptr p) : ptr{p} {}
-    iterator(const iterator &iter) : ptr{iter.ptr} {}
-    ~iterator() { ptr = nullptr; }
-
-    iterator &operator=(const iterator &other) {
-      ptr = other.ptr;
-      return *this;
-    }
-
-    bool operator==(const iterator &other) const { return ptr == other.ptr; }
-    bool operator!=(const iterator &other) const { return ptr != other.ptr; }
-
-    iterator &operator++() {
-      ptr = ptr->successor();
-      return *this;
-    }
-
-    iterator operator++(int) {
-      iterator tmp = *this;
-      ptr = ptr->successor();
-      return tmp;
-    }
-
-    iterator &operator--() {
-      ptr = ptr->predesessor();
-      return *this;
-    }
-
-    iterator operator--(int) {
-      iterator tmp = *this;
-      ptr = ptr->predesessor();
-      return tmp;
-    }
-
-    std::pair<K, V>& operator*() const {
-      return std::pair<K, V>(ptr->key, ptr->value);
-    }
-
-    node_ptr get_ptr() const { return ptr; }
-
-   private:
-    node_ptr ptr;
-    };
-
-    class const_iterator {
-   public:
-    const_iterator() : ptr{nullptr} {}
-    explicit const_iterator(node_ptr p) : ptr{p} {
-    }
-
-    explicit const_iterator(const const_iterator &iter) : ptr{iter.ptr} {}
-
-    ~const_iterator() { ptr = nullptr; }
-
-    const_iterator &operator=(const const_iterator &other) {
-      ptr = other.ptr;
-      return *this;
-    }
-
-    bool operator==(const const_iterator &other) const { return ptr == other.ptr; }
-    bool operator!=(const const_iterator &other) const { return ptr != other.ptr; }
-
-    const_iterator &operator++() {
-      ptr = ptr->successor();
-      return *this;
-    }
-
-    const_iterator operator++(int) {
-      const_iterator tmp = *this;
-      ptr = ptr->successor();
-      return tmp;
-    }
-
-    const_iterator &operator--() {
-      ptr = ptr->predesessor();
-      return *this;
-    }
-
-    const_iterator operator--(int) {
-      const_iterator tmp = *this;
-      ptr = ptr->predesessor();
-      return tmp;
-    }
-
-    std::pair<K, V>& operator*() const {
-      return std::pair<K, V>(ptr->key, ptr->value);
-    }
-
-    node_ptr get_ptr() const { return ptr; }
-
-   private:
-    node_ptr ptr;
-    };
+    class iterator;
+    class const_iterator;
+    class reverse_iterator;
+    class const_reverse_iterator;
 
     RBTree() : root{nullptr}, alloc{}, comp{} {}
 
@@ -248,8 +158,7 @@ template<
     }
 
     ~RBTree() {
-      delete_node(root);
-      root = nullptr;
+      clear();
     }
 
     void printTree() {
@@ -297,12 +206,28 @@ template<
       return const_iterator(root->min());
     }
 
+    const_iterator cbegin() const noexcept {
+      return const_iterator(root->min());
+    }
+
     iterator end() noexcept {
       return iterator();
     }
 
     const_iterator end() const noexcept {
       return const_iterator();
+    }
+
+    const_iterator cend() const noexcept {
+      return const_iterator();
+    }
+
+    reverse_iterator rbegin() noexcept {
+      return reverse_iterator(root->max());
+    }
+
+    reverse_iterator rend() noexcept {
+      return reverse_iterator();
     }
 
     std::pair<iterator, bool> insert(const std::pair<const K, V>& value, bool unique = true) {
@@ -340,8 +265,46 @@ template<
       return std::pair<iterator, bool>(iterator(t), true);
     }
 
-    void remove(const K& key) {
-      if (empty()) return;
+    template< class... Args >
+      std::pair<iterator,bool> emplace( Args&&... args ) {
+        RBNode<K,V>* newNode = alloc.allocate(1);
+        alloc.construct(newNode, RBNode<K,V>(std::forward<Args>(args)...));
+
+        if (empty()) {
+          newNode->color = Color::BLACK;
+          root = newNode;
+          return std::make_pair(iterator(newNode), true);
+        }
+        
+        node_ptr parent = nullptr;
+        node_ptr curr = root;
+        while (curr != nullptr) {
+            parent = curr;
+            if (comp(newNode->key, curr->key)) {
+                curr = curr->left;
+            } else if (comp(curr->key, newNode->key)) {
+                curr = curr->right;
+            } else {
+                alloc.deallocate(newNode, 1);
+                return std::make_pair(iterator(curr), false);
+            }
+        }
+        
+        newNode->parent = parent;
+        if (!parent) {
+            root = newNode;
+        } else if (comp(newNode->key, parent->key)) {
+            parent->left = newNode;
+        } else {
+            parent->right = newNode;
+        }
+        fixInsertion(newNode);
+        
+        return std::make_pair(iterator(newNode), true);
+    }
+
+    size_type erase(const K& key) {
+      if (empty()) return 0;
       node_ptr tmp = root;
 
       while (tmp != nullptr && tmp->key != key) {
@@ -351,13 +314,17 @@ template<
           tmp = tmp->right;
       }
 
-      if (tmp == nullptr) {
-        std::cout << "Can't find Node with key " << key << std::endl;
-        return;
-      }
+      if (tmp == nullptr) return 0;
 
       removeNode(tmp);
 
+      return 1;
+    }
+
+    void swap(RBTree& other) noexcept {
+      std::swap(root, other.root);
+      std::swap(alloc, other.alloc);
+      std::swap(comp, other.comp);
     }
 
     // iterator here and return end() if no key found
@@ -375,13 +342,22 @@ template<
       return tmp;
     }
     
-    bool empty() const {
+    bool empty() const noexcept {
       return root == nullptr;
+    }
+
+    size_type size() const noexcept {
+      return count_size(root);
+    }
+
+    void clear() noexcept {
+      delete_node(root);
+      root = nullptr;
     }
 
     node_ptr get_root() { return root; }
 
-    int rb_assert (node_ptr rut) {
+    int rb_assert (node_ptr rut, bool unique = true) {
 
        if (rut == NULL)
               return 1;
@@ -398,16 +374,26 @@ template<
                  }
           }
 
-          lh = rb_assert (ln);
-          rh = rb_assert (rn);
+          lh = rb_assert (ln, unique);
+          rh = rb_assert (rn, unique);
 
           /* Invalid binary search tree */
-          if ((ln != nullptr && ln->key >= rut->key)
-                 || (rn != nullptr && rn->key <= rut->key))
-          {
-            std::cout << "Binary tree violation";
-                 return 0;
+          if (unique == true) {
+            if ((ln != nullptr && ln->key >= rut->key)
+                   || (rn != nullptr && rn->key <= rut->key))
+            {
+              std::cout << "Binary tree violation";
+                   return 0;
+            }
+          } else {
+            if ((ln != nullptr && ln->key > rut->key)
+                   || (rn != nullptr && rn->key < rut->key))
+            {
+              std::cout << "Binary tree violation";
+                   return 0;
+            }
           }
+          
 
           /* Black height mismatch */
           if (lh != 0 && rh != 0 && lh != rh) {
@@ -424,23 +410,6 @@ template<
  } 
     
   private:
-
-    node_ptr grandparent(node_ptr n) {
-      if (n != nullptr && n->parent != nullptr)
-        return n->parent->parent;
-
-      return nullptr;
-    }
-
-    node_ptr uncle(node_ptr n) {
-      node_ptr grandpa = grandparent(n);
-      if (nullptr == grandpa) // no grandparent = no uncle
-        return nullptr;
-      if (n->parent == grandpa->left)
-        return grandpa->right;
-      else
-        return grandpa->left;
-    }
 
     // implement this for correct fixInsertion
     void rotateLeft(node_ptr node) {
@@ -596,7 +565,6 @@ template<
 
       // case 1 && 2
       else {
-        std::cout << "\nNode have 2 children.\n";
         node_ptr rMin = rightMin(node);
 
         node->key = rMin->key;
@@ -607,21 +575,8 @@ template<
 
     }
 
-    bool noChildren(node_ptr node) {
-      return node->left == nullptr && node->right == nullptr;
-    }
-
-    // node - parent удаленного узла
-    void fixDeleting(node_ptr node, node_ptr brother) {
+        void fixDeleting(node_ptr node, node_ptr brother) {
       std::cout << "\nInside FixDeleting...\n";
-
-/*       node_ptr bro = node->left == nullptr ? node->right : node->left; */
-
-/*       std::cout << "BRO:\n"; */
-/*       bro->printData(); */
-
-/*       std::cout << "BROTHER:\n"; */
-/*       brother->printData(); */
 
       if (isRed(node) && isBlack(brother) && isBlack(brother->left) &&
           isBlack(brother->right)) {
@@ -684,6 +639,28 @@ template<
       } 
     }
 
+
+    node_ptr grandparent(node_ptr n) {
+      if (n != nullptr && n->parent != nullptr)
+        return n->parent->parent;
+
+      return nullptr;
+    }
+
+    node_ptr uncle(node_ptr n) {
+      node_ptr grandpa = grandparent(n);
+      if (nullptr == grandpa) // no grandparent = no uncle
+        return nullptr;
+      if (n->parent == grandpa->left)
+        return grandpa->right;
+      else
+        return grandpa->left;
+    }
+
+    bool noChildren(node_ptr node) {
+      return node->left == nullptr && node->right == nullptr;
+    }
+
     bool oneChild(node_ptr node) {
       return (node->left == nullptr && node->right != nullptr) ||
              (node->left != nullptr && node->right == nullptr);
@@ -706,9 +683,7 @@ template<
     }
 
     bool isBlack(node_ptr node) {
-      // because list node is always black
       return node == nullptr || node->color == Color::BLACK;
-      /* return node != nullptr && node->color == Color::BLACK; */
     }
 
     bool oneChildRed(node_ptr node) {
@@ -752,8 +727,162 @@ template<
 
       alloc.deallocate(start, 1);
     }
+
+    size_type count_size(node_ptr rut) const {
+      if (rut == nullptr) return 0;
+
+      size_type sz = 1;
+      sz += count_size(rut->left);
+      sz += count_size(rut->right);
+
+      return sz;
+    }
+  public:
+    class iterator {
+   public:
+    iterator() : ptr{nullptr} {}
+    explicit iterator(node_ptr p) : ptr{p} {}
+    iterator(const iterator &iter) : ptr{iter.ptr} {}
+    ~iterator() { ptr = nullptr; }
+
+    iterator &operator=(const iterator &other) {
+      ptr = other.ptr;
+      return *this;
+    }
+
+    bool operator==(const iterator &other) const { return ptr == other.ptr; }
+    bool operator!=(const iterator &other) const { return ptr != other.ptr; }
+
+    iterator &operator++() {
+      ptr = ptr->successor();
+      return *this;
+    }
+
+    iterator operator++(int) {
+      iterator tmp = *this;
+      ptr = ptr->successor();
+      return tmp;
+    }
+
+    iterator &operator--() {
+      ptr = ptr->predesessor();
+      return *this;
+    }
+
+    iterator operator--(int) {
+      iterator tmp = *this;
+      ptr = ptr->predesessor();
+      return tmp;
+    }
+
+    K& operator*() const {
+      return ptr->key;
+    }
+
+    node_ptr get_ptr() const { return ptr; }
+
+   private:
+    node_ptr ptr;
+    };
+
+    class const_iterator {
+   public:
+    const_iterator() : ptr{nullptr} {}
+    explicit const_iterator(node_ptr p) : ptr{p} {
+    }
+
+    explicit const_iterator(const const_iterator &iter) : ptr{iter.ptr} {}
+
+    ~const_iterator() { ptr = nullptr; }
+
+    const_iterator &operator=(const const_iterator &other) {
+      ptr = other.ptr;
+      return *this;
+    }
+
+    bool operator==(const const_iterator &other) const { return ptr == other.ptr; }
+    bool operator!=(const const_iterator &other) const { return ptr != other.ptr; }
+
+    const_iterator &operator++() {
+      ptr = ptr->successor();
+      return *this;
+    }
+
+    const_iterator operator++(int) {
+      const_iterator tmp = *this;
+      ptr = ptr->successor();
+      return tmp;
+    }
+
+    const_iterator &operator--() {
+      ptr = ptr->predesessor();
+      return *this;
+    }
+
+    const_iterator operator--(int) {
+      const_iterator tmp = *this;
+      ptr = ptr->predesessor();
+      return tmp;
+    }
+
+    const K& operator*() const {
+      node_ptr tmp = const_cast<node_ptr>(ptr);
+      return tmp->key;
+    }
+
+    node_ptr get_ptr() const { return ptr; }
+
+   private:
+    node_ptr ptr;
+    };
+
+    class reverse_iterator {
+   public:
+    reverse_iterator() : ptr{nullptr} {}
+    explicit reverse_iterator(node_ptr p) : ptr{p} {}
+    reverse_iterator(const reverse_iterator &iter) : ptr{iter.ptr} {}
+    ~reverse_iterator() { ptr = nullptr; }
+
+    reverse_iterator &operator=(const reverse_iterator &other) {
+      ptr = other.ptr;
+      return *this;
+    }
+
+    bool operator==(const reverse_iterator &other) const { return ptr == other.ptr; }
+    bool operator!=(const reverse_iterator &other) const { return ptr != other.ptr; }
+
+    reverse_iterator &operator++() {
+      ptr = ptr->predesessor();
+      return *this;
+    }
+
+    reverse_iterator operator++(int) {
+      reverse_iterator tmp = *this;
+      ptr = ptr->predesessor();
+      return tmp;
+    }
+
+    reverse_iterator &operator--() {
+      ptr = ptr->successor();
+      return *this;
+    }
+
+    reverse_iterator operator--(int) {
+      reverse_iterator tmp = *this;
+      ptr = ptr->successor();
+      return tmp;
+    }
+
+    K& operator*() const {
+      return ptr->key;
+    }
+
+    node_ptr get_ptr() const { return ptr; }
+
+   private:
+    node_ptr ptr;
+    };
+
 };
-
-
 
 #endif // _RB_TREE_H_

@@ -40,22 +40,23 @@ int main() {
   tree.printSimmetric(tree.get_root());
   std::cout << std::endl;
 
-  std::cout << "ASSERT: " << tree.rb_assert(tree.get_root()) << std::endl;
+  std::cout << "ASSERT: " << tree.rb_assert(tree.get_root(), true) << std::endl;
 
-  std::cout << tree[55] << std::endl;
+  std::cout << tree.size() << std::endl;
 
+  tree.emplace(std::make_pair(-4, -4));
 
   /* RBTree<int, int>::iterator it = tree.begin(); */
   /* std::cout << (*it).first << std::endl; */
   /* RBTree<int, int> treecpy =tree; */
 
-  /* treecpy.printTree(); */
-  /* std::cout << std::endl; */
+  tree.printTree();
+  std::cout << std::endl;
 
-  /* treecpy.printSimmetric(treecpy.get_root()); */
-  /* std::cout << std::endl; */
+  tree.printSimmetric(tree.get_root());
+  std::cout << std::endl;
 
-  /* std::cout << "ASSERT: " << treecpy.rb_assert(tree.get_root()); */
+  /* std::cout << "ASSERT: " << tree.rb_assert(tree.get_root()); */
 
 
 

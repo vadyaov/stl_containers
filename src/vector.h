@@ -91,6 +91,7 @@ class vector {
       ptr = other.ptr;
       return *this;
     }
+
     bool operator==(const iterator& other) const { return ptr == other.ptr; }
     bool operator!=(const iterator& other) const { return ptr != other.ptr; }
     bool operator<(const iterator& other) const { return ptr < other.ptr; }

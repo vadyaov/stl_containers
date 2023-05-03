@@ -1,7 +1,7 @@
 #include <iostream>
 #include <list>
 #include <vector>
-#include "list.h"
+#include "../list.h"
 
 int main() {
   std::list<int> v {1, 0, -19, 5, -6, -7, -8, -9, -10};

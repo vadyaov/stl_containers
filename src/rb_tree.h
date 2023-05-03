@@ -44,8 +44,7 @@ struct RBNode {
   }
 
   RBNode* min() {
-    if (left == nullptr) return this;
-    return left->min();
+    return left == nullptr ? this : left->min();
   }
 
   RBNode* max() {
@@ -137,7 +136,7 @@ template<
       for (auto i : ilist) insert(i);
     }
 
-    RBTree(RBTree&& other) noexcept : root{other.root},
+    RBTree(RBTree&& other) noexcept : root{std::move(other.root)},
                                       alloc{std::move(other.alloc)},
                                       comp{std::move(other.comp)} {
       other.root = nullptr;
@@ -154,6 +153,12 @@ template<
       alloc = other.alloc;
       comp = other.comp;
       other.root = nullptr;
+      return *this;
+    }
+
+    RBTree& operator=(const std::initializer_list<value_type>& ilist) {
+      RBTree tmp{ilist};
+      std::swap(*this, tmp);
       return *this;
     }
 
@@ -176,22 +181,23 @@ template<
     }
 
     V& at(const K& key) {
-      node_ptr node = find(key);
+      node_ptr node = findNode(key);
       if (node == nullptr)
-        throw std::out_of_range("Can't find node with 'key'");
+        throw std::out_of_range("map::at");
       return node->value;
     }
 
     const V& at(const K& key) const {
-      node_ptr node = find(key);
+      node_ptr node = findNode(key);
       if (node == nullptr)
-        throw std::out_of_range("Can't find node with 'key'");
+        throw std::out_of_range("map::at");
       return node->value;
     }
 
     V& operator[](const K& key) {
-      node_ptr node = find(key);
+      node_ptr node = findNode(key);
       if (node == nullptr) {
+        std::cout << "node = " << node << std::endl;
         std::pair<iterator, bool> p = insert(value_type(key, V()));
         node = p.first.get_ptr();
       }
@@ -199,14 +205,20 @@ template<
     }
 
     iterator begin() noexcept {
+      if (root == nullptr)
+        return iterator(nullptr);
       return iterator(root->min());
     }
 
     const_iterator begin() const noexcept {
+      if (root == nullptr)
+        return const_iterator(nullptr);
       return const_iterator(root->min());
     }
 
     const_iterator cbegin() const noexcept {
+      if (root == nullptr)
+        return const_iterator(nullptr);
       return const_iterator(root->min());
     }
 
@@ -327,21 +339,14 @@ template<
       std::swap(comp, other.comp);
     }
 
-    // iterator here and return end() if no key found
-    node_ptr find(const K& key) {
-      if (empty()) throw std::runtime_error("RBTree is empty");
-
-      node_ptr tmp = root;
-      while (tmp != nullptr && tmp->key != key) {
-        if (comp(key, tmp->key))
-          tmp = tmp->left;
-        else
-          tmp = tmp->right;
-      }
-
-      return tmp;
+    iterator find(const K& key) {
+      return iterator(findNode(key));
     }
-    
+
+    const_iterator find(const K& key) const {
+      return const_iterator(findNode(key));
+    }
+
     bool empty() const noexcept {
       return root == nullptr;
     }
@@ -737,6 +742,22 @@ template<
 
       return sz;
     }
+
+    // iterator here and return end() if no key found
+    node_ptr findNode(const K& key) {
+      if (empty()) return nullptr;
+
+      node_ptr tmp = root;
+      while (tmp != nullptr && tmp->key != key) {
+        if (comp(key, tmp->key))
+          tmp = tmp->left;
+        else
+          tmp = tmp->right;
+      }
+
+      return tmp;
+    }
+    
   public:
     class iterator {
    public:

@@ -1,62 +1,57 @@
-#ifndef MAP_H_
-#define MAP_H_
+#ifndef _SET_H_
+#define _SET_H_
 
 #include "rb_tree.h"
 
 namespace s21 {
 
-  template<class Key, class T, class Compare = std::less<Key>>
-  class map {
-    public:
-      typedef RBTree<Key, T, Compare> rb_tree;
-      typedef typename RBTree<Key, T, Compare>::key_type key_type;
-      typedef typename RBTree<Key, T, Compare>::mapped_type mapped_type;
-      typedef typename RBTree<Key, T, Compare>::value_type value_type;
-      typedef typename RBTree<Key, T, Compare>::size_type size_type;
-      typedef typename RBTree<Key, T, Compare>::key_compare key_compare;
-      typedef typename RBTree<Key, T, Compare>::allocator_type allocator_type;
-      typedef typename RBTree<Key, T, Compare>::reference reference;
-      typedef typename RBTree<Key, T, Compare>::const_reference const_reference;
-      typedef typename RBTree<Key, T, Compare>::iterator iterator;
-      typedef typename RBTree<Key, T, Compare>::const_iterator const_iterator;
-      typedef typename RBTree<Key, T, Compare>::reverse_iterator reverse_iterator;
+  template<class Key, class Compare = std::less<Key>>
+    class set {
+      public:
+        typedef char T;
+        typedef RBTree<Key, T, Compare> rb_tree;
+        typedef typename RBTree<Key, T, Compare>::key_type key_type;
+        typedef typename RBTree<Key, T, Compare>::key_type value_type;
+        typedef typename RBTree<Key, T, Compare>::size_type size_type;
+        typedef typename RBTree<Key, T, Compare>::key_compare key_compare;
+        typedef typename RBTree<Key, T, Compare>::allocator_type allocator_type;
+        typedef typename RBTree<Key, T, Compare>::reference reference;
+        typedef typename RBTree<Key, T, Compare>::const_reference const_reference;
+        typedef typename RBTree<Key, T, Compare>::iterator iterator;
+        typedef typename RBTree<Key, T, Compare>::const_iterator const_iterator;
+        typedef typename RBTree<Key, T, Compare>::reverse_iterator reverse_iterator;
 
       /* Member functions */
 
-      map() : tree{} {} 
+      set() : tree{} {} 
 
-      map(const map& other) : tree{other.tree} {}
+      set(const set& other) : tree{other.tree} {}
 
-      map& operator=(const map& other) {
+      set& operator=(const set& other) {
         tree = other.tree;
         return *this;
       }
 
-      map(map&& other) noexcept : tree{std::move(other.tree)} {}
+      set(set&& other) noexcept : tree{std::move(other.tree)} {}
 
-      map& operator=(map&& other) noexcept {
+      set& operator=(set&& other) noexcept {
         tree = std::move(other.tree);
         return *this;
       }
 
-      map(std::initializer_list<value_type> init) : tree{init} {}
+      set(std::initializer_list<value_type> init) : tree{} {
+        for (auto i : init)
+          tree.insert(std::make_pair(i, T()));
+      }
 
-      map& operator=(std::initializer_list<value_type> init)  {
-        tree = init;
+      set& operator=(std::initializer_list<value_type> init)  {
+        set tmp{init};
+        std::swap(*this, tmp);
         return *this;
       }
 
-      ~map() = default;
+      ~set() = default;
 
-      /* Element access */
-
-      T& at(const Key& key) {return tree.at(key);}
-
-      const T& at(const Key& key) const {return tree.at(key);}
-
-      T& operator[](const Key& key) {
-        return tree[key];
-      }
 
       /* Iterators */
 
@@ -107,7 +102,7 @@ namespace s21 {
       }
 
       std::pair<iterator, bool> insert(const value_type& value) {
-        return tree.insert(value);
+        return tree.insert(std::make_pair(value, T()));
       }
 
       template<class... Args>
@@ -119,7 +114,7 @@ namespace s21 {
         return tree.erase(key);
       }
 
-      void swap(map& other) noexcept {
+      void swap(set& other) noexcept {
         return tree.swap(other.tree);
       }
 
@@ -133,8 +128,8 @@ namespace s21 {
 
     private:
       rb_tree tree;
-  };
+    };
 
 } // namespace s21
 
-#endif // MAP_H
+#endif // _SET_H_

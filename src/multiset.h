@@ -1,12 +1,12 @@
-#ifndef _SET_H_
-#define _SET_H_
+#ifndef _MULTISET_H_
+#define _MULTISET_H_
 
 #include "rb_tree.h"
 
 namespace s21 {
 
   template<class Key, class Compare = std::less<Key>>
-    class set {
+    class multiset {
       public:
         typedef char T;
         typedef RBTree<Key, T, Compare> rb_tree;
@@ -23,34 +23,34 @@ namespace s21 {
 
       /* Member functions */
 
-      set() : tree{} {} 
+      multiset() : tree{} {} 
 
-      set(const set& other) : tree{other.tree} {}
+      multiset(const multiset& other) : tree{other.tree} {}
 
-      set& operator=(const set& other) {
+      multiset& operator=(const multiset& other) {
         tree = other.tree;
         return *this;
       }
 
-      set(set&& other) noexcept : tree{std::move(other.tree)} {}
+      multiset(multiset&& other) noexcept : tree{std::move(other.tree)} {}
 
-      set& operator=(set&& other) noexcept {
+      multiset& operator=(multiset&& other) noexcept {
         tree = std::move(other.tree);
         return *this;
       }
 
-      set(std::initializer_list<value_type> init) : tree{} {
+      multiset(std::initializer_list<value_type> init) : tree{} {
         for (auto i : init)
-          tree.insert(std::make_pair(i, T()));
+          tree.insert(std::make_pair(i, T()), false);
       }
 
-      set& operator=(std::initializer_list<value_type> init)  {
-        set tmp{init};
+      multiset& operator=(std::initializer_list<value_type> init)  {
+        multiset tmp{init};
         std::swap(*this, tmp);
         return *this;
       }
 
-      ~set() = default;
+      ~multiset() = default;
 
 
       /* Iterators */
@@ -102,19 +102,22 @@ namespace s21 {
       }
 
       std::pair<iterator, bool> insert(const value_type& value) {
-        return tree.insert(std::make_pair(value, T()));
+        return tree.insert(std::make_pair(value, T()), false);
       }
 
       template<class... Args>
         std::pair<iterator, bool> emplace(Args&&... args) {
-          return tree.unique_emplace(std::forward<Args>(args)...);
+          return tree.nounique_emplace(args...);
         }
 
       size_type erase(const Key& key) {
-        return tree.erase(key);
+        size_type tmp = tree.erase(key);
+        while (tree.erase(key))
+          tmp += 1;
+        return tmp;
       }
 
-      void swap(set& other) noexcept {
+      void swap(multiset& other) noexcept {
         return tree.swap(other.tree);
       }
 
@@ -132,4 +135,5 @@ namespace s21 {
 
 } // namespace s21
 
-#endif // _SET_H_
+#endif // _MULTISET_H_
+

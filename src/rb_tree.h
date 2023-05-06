@@ -131,7 +131,7 @@ template<
         root = copy_node(other.root, nullptr);
     }
 
-    explicit RBTree(const std::initializer_list<value_type>& ilist) :
+    RBTree(const std::initializer_list<value_type>& ilist) :
                                                 root{nullptr}, alloc{}, comp{} {
       for (auto i : ilist) insert(i);
     }
@@ -197,7 +197,6 @@ template<
     V& operator[](const K& key) {
       node_ptr node = findNode(key);
       if (node == nullptr) {
-        std::cout << "node = " << node << std::endl;
         std::pair<iterator, bool> p = insert(value_type(key, V()));
         node = p.first.get_ptr();
       }
@@ -244,7 +243,7 @@ template<
 
     std::pair<iterator, bool> insert(const std::pair<const K, V>& value, bool unique = true) {
       node_ptr t = alloc.allocate(1);
-      alloc.construct(t, RBNode<K, V>(value.first, value.second));
+      alloc.construct(t, RBNode<K, V>(value));
       if (empty()) {
         t->color = Color::BLACK;
         root = t;
@@ -262,8 +261,8 @@ template<
         }
         // checking for unique
         if (q->key == t->key && unique == true) {
-          std::cout << "Not unique key. Skip\n";
-          t->printData();
+          /* std::cout << "Not unique key. Skip\n"; */
+          /* t->printData(); */
           alloc.deallocate(t, 1);
           return std::pair<iterator, bool>(iterator(q), false);
         }
@@ -278,9 +277,9 @@ template<
     }
 
     template< class... Args >
-      std::pair<iterator,bool> emplace( Args&&... args ) {
+      std::pair<iterator,bool> unique_emplace( Args&&... args ) {
         RBNode<K,V>* newNode = alloc.allocate(1);
-        alloc.construct(newNode, RBNode<K,V>(std::forward<Args>(args)...));
+        alloc.construct(newNode, RBNode<K,V>(std::forward<Args>(args)..., V()));
 
         if (empty()) {
           newNode->color = Color::BLACK;
@@ -300,6 +299,40 @@ template<
                 alloc.deallocate(newNode, 1);
                 return std::make_pair(iterator(curr), false);
             }
+        }
+        
+        newNode->parent = parent;
+        if (!parent) {
+            root = newNode;
+        } else if (comp(newNode->key, parent->key)) {
+            parent->left = newNode;
+        } else {
+            parent->right = newNode;
+        }
+        fixInsertion(newNode);
+        
+        return std::make_pair(iterator(newNode), true);
+    }
+
+    template< class... Args >
+      std::pair<iterator,bool> nounique_emplace( Args&&... args ) {
+        RBNode<K,V>* newNode = alloc.allocate(1);
+        alloc.construct(newNode, RBNode<K,V>(std::forward<Args>(args)..., V()));
+
+        if (empty()) {
+          newNode->color = Color::BLACK;
+          root = newNode;
+          return std::make_pair(iterator(newNode), true);
+        }
+        
+        node_ptr parent = nullptr;
+        node_ptr curr = root;
+        while (curr != nullptr) {
+            parent = curr;
+            if (comp(newNode->key, curr->key))
+                curr = curr->left;
+            else
+                curr = curr->right;
         }
         
         newNode->parent = parent;

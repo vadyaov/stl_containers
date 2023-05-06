@@ -112,7 +112,7 @@ namespace s21 {
 
       template<class... Args>
         std::pair<iterator, bool> emplace(Args&&... args) {
-          return tree.emplace(std::forward<Args>(args)...);
+          return tree.unique_emplace(std::forward<Args>(args)...);
         }
 
       size_type erase(const Key& key) {

@@ -1,5 +1,5 @@
-#ifndef _stack_
-#define _stack_
+#ifndef _STL_CONTAINERS_CONTAINERS_STACK_H_
+#define _STL_CONTAINERS_CONTAINERS_STACK_H_
 
 #include <iostream>
 #include "vector.h"
@@ -71,4 +71,4 @@ namespace s21 {
     };
 } // namespace s21
 
-#endif // _stack_
+#endif  // _STL_CONTAINERS_CONTAINERS_STACK_H_

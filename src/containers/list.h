@@ -1,7 +1,6 @@
-#ifndef _list_
-#define _list_
+#ifndef _STL_CONTAINERS_CONTAINERS_LIST_H_
+#define _STL_CONTAINERS_CONTAINERS_LIST_H_
 
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <initializer_list>
@@ -715,11 +714,11 @@ class list {
 
   void sort() { head = MergeSort(head); }
 
-  void print() {
-    for (auto i: *this)
-      std::cout << " " << i;
-    std::cout << std::endl;
-  }
+  /* void print() { */
+  /*   for (auto i: *this) */
+  /*     std::cout << " " << i; */
+  /*   std::cout << std::endl; */
+  /* } */
 
 
  private:
@@ -807,4 +806,4 @@ class list {
 };
 }  // namespace s21
 
-#endif  // _list_
+#endif  // _STL_CONTAINERS_CONTAINERS_LIST_H_

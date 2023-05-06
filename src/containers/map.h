@@ -1,7 +1,7 @@
-#ifndef MAP_H_
-#define MAP_H_
+#ifndef _STL_CONTAINERS_CONTAINERS_MAP_H_
+#define _STL_CONTAINERS_CONTAINERS_MAP_H_
 
-#include "rb_tree.h"
+#include "../RBTree/rb_tree.h"
 
 namespace s21 {
 
@@ -137,4 +137,4 @@ namespace s21 {
 
 } // namespace s21
 
-#endif // MAP_H
+#endif  // _STL_CONTAINERS_CONTAINERS_MAP_H_

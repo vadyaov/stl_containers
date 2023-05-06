@@ -1,7 +1,7 @@
-#ifndef _SET_H_
-#define _SET_H_
+#ifndef _STL_CONTAINERS_CONTAINERS_SET_H_
+#define _STL_CONTAINERS_CONTAINERS_SET_H_
 
-#include "rb_tree.h"
+#include "../RBTree/rb_tree.h"
 
 namespace s21 {
 
@@ -132,4 +132,4 @@ namespace s21 {
 
 } // namespace s21
 
-#endif // _SET_H_
+#endif  // _STL_CONTAINERS_CONTAINERS_SET_H_

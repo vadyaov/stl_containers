@@ -1,5 +1,5 @@
-#ifndef _queue_
-#define _queue_
+#ifndef _STL_CONTAINERS_CONTAINERS_QUEUE_H_
+#define _STL_CONTAINERS_CONTAINERS_QUEUE_H_
 
 #include "list.h"
 
@@ -73,4 +73,4 @@ namespace s21 {
 } // namespace s21
 
 
-#endif // _queue_
+#endif  // _STL_CONTAINERS_CONTAINERS_QUEUE_H_

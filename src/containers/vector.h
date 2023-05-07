@@ -251,6 +251,13 @@ class vector {
     return insert(pos, 1, value);
   }
 
+  iterator insert(iterator pos, T&& value) {
+    if (!(pos >= begin() && pos <= end()))
+      throw std::out_of_range("position is out of range");
+
+    const difference_type index = pos - begin();
+  }
+
   iterator insert(iterator pos, size_type count, const_reference value) {
     if (count == 0) return pos;
     if (pos > end() || pos < begin())
@@ -260,7 +267,10 @@ class vector {
 
     const difference_type index = pos - begin();
 
-    if (size() + count > capacity()) {
+    /* std::cout << "size = " << size() << std::endl; */
+    /* std::cout << "capacity = " << capacity() << std::endl; */
+    /* std::cout << "count = " << count << std::endl; */
+    /* if (size() + count > capacity()) { */
       size_type new_cap = std::max(2 * capacity(), size() + count);
       vector_base<T, A> new_vb(vb.alloc, new_cap);
       new_vb.space = std::uninitialized_copy(begin(), pos, new_vb.elem);
@@ -269,11 +279,12 @@ class vector {
       new_vb.space += count + (end() - pos);
       new_vb.last = new_vb.elem + new_cap;
       std::swap(vb, new_vb);
-    } else {
-      std::move_backward(begin() + index, end(), end() + count);
-      std::uninitialized_fill_n(pos, count, value);
-      vb.space += count;
-    }
+    /* } else { */
+    /*   std::move_backward(begin() + index, end(), end() + count); */
+    /*   std::uninitialized_fill_n(pos, count, value); */
+    /*   vb.space += count; */
+    /*   std::cout << "IM HERE\n"; */
+    /* } */
     return begin() + index;
   }
 
@@ -287,7 +298,7 @@ class vector {
     const difference_type sz = last - first;
     const difference_type index = pos - begin();
 
-    if (size() + sz > capacity()) {
+    /* if (size() + sz > capacity()) { */
       size_type new_cap = std::max(2 * capacity(), size() + sz);
       vector_base<T, A> new_vb(vb.alloc, new_cap);
       std::uninitialized_copy(vb.elem, vb.elem + index, new_vb.elem);
@@ -298,11 +309,11 @@ class vector {
       for (pointer p = vb.elem; p != vb.space; ++p) vb.alloc.destroy(p);
       vb.alloc.deallocate(vb.elem, vb.last - vb.elem);
       vb = std::move(new_vb);
-    } else {
-      std::move_backward(begin() + index, end(), end() + sz);
-      std::uninitialized_copy(first, last, pos);
-      vb.space += sz;
-    }
+    /* } else { */
+    /*   std::move_backward(begin() + index, end(), end() + sz); */
+    /*   std::uninitialized_copy(first, last, pos); */
+    /*   vb.space += sz; */
+    /* } */
     return begin() + index;
   }
 
@@ -319,8 +330,6 @@ iterator emplace(iterator pos, Args&&... args) {
     iterator ret;
     difference_type id = pos - begin();
 
-    reserve(size() + sizeof...(args));
-
     for (auto& item : {std::forward<Args>(args)...})
         ret = insert(begin() + id, item);
     return ret;
@@ -332,7 +341,7 @@ iterator emplace(iterator pos, Args&&... args) {
   }
 
   iterator erase(iterator pos) {
-    if (pos >= end() || pos < begin()) throw std::out_of_range("pos is out of range in erase");
+    if (!(pos < end() && pos >= begin())) throw std::out_of_range("pos is out of range in erase");
     const difference_type index = pos - begin();
     vb.alloc.destroy(vb.elem + index);
     for (auto it = pos; it < end() - 1; ++it)
@@ -548,7 +557,11 @@ iterator emplace(iterator pos, Args&&... args) {
       tmp -= n;
       return tmp;
     }
-    difference_type operator-(const_iterator other) { return ptr - other.ptr; }
+    difference_type operator-(const_iterator other) {
+      if (other.ptr == nullptr || ptr == nullptr)
+        return 0;
+      return ptr - other.ptr;
+    }
     reference operator*() const { return *ptr; }
     pointer operator->() const { return ptr; }
     reference operator[](size_type n) const { return *(ptr + n); }
@@ -632,6 +645,8 @@ iterator emplace(iterator pos, Args&&... args) {
       return tmp;
     }
     difference_type operator-(reverse_iterator other) {
+      if (other.ptr == nullptr || ptr == nullptr)
+        return 0;
       return other.ptr - ptr;
     }
     reference operator*() const { return *ptr; }
@@ -718,6 +733,8 @@ iterator emplace(iterator pos, Args&&... args) {
       return tmp;
     }
     difference_type operator-(const_reverse_iterator other) {
+      if (other.ptr == nullptr || ptr == nullptr)
+        return 0;
       return other.ptr - ptr;
     }
     reference operator*() const { return *ptr; }

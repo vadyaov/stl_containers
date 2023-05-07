@@ -1,6 +1,7 @@
 #ifndef _STL_CONTAINERS_CONTAINERS_VECTOR_H_
 #define _STL_CONTAINERS_CONTAINERS_VECTOR_H_
 
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <initializer_list>
@@ -310,21 +311,24 @@ class vector {
     return insert(pos, tmp.begin(), tmp.end());
   }
 
-  template <class... Args>
-  iterator emplace(iterator pos, Args&&... args) {
-    if (pos > end()) throw std::out_of_range("emplace");
+template <class... Args>
+iterator emplace(iterator pos, Args&&... args) {
+    if (pos > end()) {
+        throw std::out_of_range("emplace");
+    }
+    iterator ret;
+    difference_type id = pos - begin();
 
-    const difference_type index = pos - begin();
-    if (capacity() == size()) reserve(2 * capacity());
-    std::move_backward(begin() + index, end(), end() + 1);
-    vb.alloc.construct(vb.elem + index, std::forward<Args>(args)...);
-    vb.space++;
-    return begin() + index;
-  }
+    reserve(size() + sizeof...(args));
+
+    for (auto& item : {std::forward<Args>(args)...})
+        ret = insert(begin() + id, item);
+    return ret;
+}
 
   template <class... Args>
   reference emplace_back(Args&&... args) {
-    return *emplace(iterator(vb.space), args...);
+    return *emplace(iterator(vb.space), std::forward<Args>(args)...);
   }
 
   iterator erase(iterator pos) {
@@ -456,7 +460,11 @@ class vector {
       tmp -= n;
       return tmp;
     }
-    difference_type operator-(iterator other) { return ptr - other.ptr; }
+    difference_type operator-(iterator other) {
+      if (other.ptr == nullptr || ptr == nullptr)
+        return 0;
+      return ptr - other.ptr;
+    }
     reference operator*() const { return *ptr; }
     pointer operator->() const { return ptr; }
 

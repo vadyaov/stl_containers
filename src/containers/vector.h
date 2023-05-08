@@ -249,9 +249,8 @@ class vector {
 
   template <class... Args>
   iterator emplace(iterator pos, Args&&... args) {
-      if (pos > end()) {
+      if (pos > end() || pos < begin())
           throw std::out_of_range("emplace");
-      }
       iterator ret;
       difference_type id = pos - begin();
 
@@ -281,19 +280,16 @@ class vector {
     if (first >= end() || last > end() || first < begin())
       throw std::out_of_range("out_of_range in erase()");
 
-    const difference_type index = first - begin();
-    const size_type sz = last - first;
+    difference_type sz = last - first;
 
-    for (iterator it = first; it < last; ++it)
-      vb.alloc.destroy(it.operator->());
-    for (iterator it = first; it < last && it + sz < end(); ++it)
-      vb.alloc.construct(std::addressof(*it), *(it + sz));
-    for (iterator it = last; it + sz < end(); ++it) *(it - sz) = std::move(*it);
-    for (pointer p = vb.space - sz; p < vb.space; ++p) vb.alloc.destroy(p);
+    for (iterator it = first; it != last; ++it)
+      vb.alloc.destroy(std::addressof(*it));
+
+    std::uninitialized_copy(first + sz, end(), first);
 
     vb.space -= sz;
 
-    return begin() + index;
+    return iterator(first);
   }
 
   void push_back(const T& value) {
@@ -319,7 +315,9 @@ class vector {
 
   void resize(size_type newsize, const_reference value) {
     if (newsize < max_size()) {
-      reserve(newsize > capacity() && capacity() ? capacity() * 2 : newsize);
+      if (newsize != 0)
+        reserve(std::max(newsize, capacity() * 2));
+
       if (size() < newsize) {
         std::uninitialized_fill(vb.elem + size(), vb.elem + newsize, value);
       } else {

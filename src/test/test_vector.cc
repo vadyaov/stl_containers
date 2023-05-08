@@ -345,6 +345,23 @@ TEST_F(VectorTest, erase) {
 
     ASSERT_EQ(vec0_.size(), want.size());
     ASSERT_EQ(vec0_.capacity(), want.capacity());
+
+    s21::vector<int> v1 = {9, 8, 7, 6, 5, 4, 3, 2, 1};
+    std::vector<int> stdv1 {9, 8, 7, 6, 5, 4, 3, 2, 1};
+
+    v1.erase(v1.begin(), v1.begin() + 3);
+    stdv1.erase(stdv1.begin(), stdv1.begin() + 3);
+
+
+    ASSERT_EQ(*v1.erase(v1.begin() + 2, v1.begin() + 3),
+              *stdv1.erase(stdv1.begin() + 2, stdv1.begin() + 3));
+
+    for (auto i = want.size() - 1; i != 0; --i)
+        ASSERT_EQ(v1[i], stdv1[i]);
+    ASSERT_EQ(v1[0], stdv1[0]);
+
+    ASSERT_EQ(v1.size(), stdv1.size());
+    ASSERT_EQ(v1.capacity(), stdv1.capacity());
 }
 
 TEST_F(VectorTest, erase_edge) {
@@ -437,9 +454,10 @@ TEST_F(VectorTest, push_back_A) {
 }
 
 TEST_F(VectorTest, push_back) {
-    vec0_.push_back(6);
+    int a = 6;
+    vec0_.push_back(a);
     std::vector<int> want{1, 2, 3, 4, 5, 6, 7, 8, 9};
-    want.push_back(6);
+    want.push_back(a);
 
     for (auto i = want.size() - 1; i < want.size(); --i)
         ASSERT_EQ(vec0_[i], want[i]);
@@ -459,6 +477,26 @@ TEST_F(VectorTest, push_back_empty) {
 
     ASSERT_EQ(got.size(), want.size());
     ASSERT_EQ(got.capacity(), want.capacity());
+}
+
+TEST_F(VectorTest, resize) {
+  size_t sz = vec0_.size();
+  vec0_.resize(sz - 3);
+  ASSERT_EQ(vec0_.size(), sz - 3);
+
+  for (size_t i = 0; i < sz - 3; ++i)
+    ASSERT_EQ(vec0_[i], i + 1);
+
+  vec0_.resize(20, -1);
+  /* ASSERT_EQ(vec0_.size(), 20); */
+  /* std::cout << "size: " << vec0_.size() << std::endl; */
+  for (size_t i = 0; i < sz - 3; ++i)
+    ASSERT_EQ(vec0_[i], i + 1);
+
+  for (size_t i = sz - 3; i < vec0_.size(); ++i)
+    ASSERT_EQ(vec0_[i], -1);
+
+
 }
 
 TEST_F(VectorTest, pop_back) {
@@ -509,6 +547,8 @@ TEST_F(VectorTest, emplace_back) {
 TEST_F(VectorTest, emplace) {
     using std::string;
     std::vector<string> want;
+
+    ASSERT_ANY_THROW(vec0_.emplace(vec0_.begin() - 1, -1));
 
     want.emplace(want.begin(), "one");
     vec5_.emplace(vec5_.begin(), "one");

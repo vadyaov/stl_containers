@@ -18,9 +18,6 @@ class vector_base {
 
   vector_base() : elem{nullptr}, space{nullptr}, last{nullptr}, alloc{A()} {}
 
-  explicit vector_base(const A& a) noexcept
-      : elem{nullptr}, space{nullptr}, last{nullptr}, alloc{a} {}
-
   vector_base(const A& a, typename A::size_type n) : alloc{a} {
     elem = alloc.allocate(n);
     space = last = elem + n;
@@ -34,13 +31,6 @@ class vector_base {
         space{other.space},
         last{other.last},
         alloc{other.alloc} {
-    other.elem = nullptr;
-    other.space = nullptr;
-    other.last = nullptr;
-  }
-
-  vector_base(vector_base&& other, const A& a) noexcept
-      : elem{other.elem}, space{other.space}, last{other.last}, alloc{a} {
     other.elem = nullptr;
     other.space = nullptr;
     other.last = nullptr;
@@ -83,36 +73,18 @@ class vector {
   typedef typename const_iterator::pointer const_pointer;
 
   vector() : vb() {}
-  explicit vector(const A& a) noexcept : vb{a} {}
   explicit vector(size_type count, const T& value = T(), const A& a = A())
       : vb{a, count} {
     std::uninitialized_fill(vb.elem, vb.elem + count, value);
-  }
-
-  explicit vector(size_type count, const A& a) : vb{a, count} {
-    std::uninitialized_fill(vb.elem, vb.elem + count, value_type());
-  }
-
-  template <class InputIt>
-  vector(InputIt first, InputIt last, const A& alloc = A())
-      : vb{alloc, (size_type)(last - first)} {
-    std::uninitialized_copy(first, last, vb.elem);
   }
 
   vector(const vector& other) : vb{other.vb.alloc, other.size()} {
     std::uninitialized_copy(other.begin(), other.end(), vb.elem);
   }
 
-  vector(const vector& other, const allocator_type& alloc)
-      : vb{alloc, other.size()} {
-    std::uninitialized_copy(other.begin(), other.end(), vb.elem);
-  }
-
   vector(vector&& other) noexcept : vb{std::move(other.vb)} {}
 
-  vector(vector&& other, const A& alloc) : vb{std::move(other.vb), alloc} {}
-
-  explicit vector(std::initializer_list<T> init, const A& alloc = A())
+  vector(std::initializer_list<T> init, const A& alloc = A())
       : vb{alloc, init.size()} {
     std::uninitialized_copy(init.begin(), init.end(), vb.elem);
   }
@@ -159,13 +131,7 @@ class vector {
   }
 
   void assign(size_type count, const T& value) {
-    vector tmp{count, value};
-    *this = tmp;
-  }
-
-  template <typename InputIt>
-  void assign(InputIt first, InputIt last) {
-    vector tmp{first, last};
+    vector tmp(count, value);
     *this = tmp;
   }
 
@@ -248,92 +214,51 @@ class vector {
   void clear() noexcept { resize(0); }
 
   iterator insert(iterator pos, const_reference value) {
-    return insert(pos, 1, value);
+    size_type index = pos - begin();
+    if (pos < begin() || pos > end())
+      throw std::out_of_range("position is out of range");
+
+    if (size() == capacity())
+      reserve(size() == 0 ? 1 : size() * 2);
+
+    vector_base<T, A> tmp (vb.alloc, size() - index);
+    std::uninitialized_copy(vb.elem + index, vb.space, tmp.elem);
+    std::uninitialized_copy(tmp.elem, tmp.space, vb.elem + index + 1);
+    vb.alloc.construct(vb.elem + index, value);
+    ++vb.space;
+
+    return begin() + index;
   }
 
   iterator insert(iterator pos, T&& value) {
-    if (!(pos >= begin() && pos <= end()))
+    size_type index = pos - begin();
+    if (pos < begin() || pos > end())
       throw std::out_of_range("position is out of range");
 
-    const difference_type index = pos - begin();
-  }
+    if (size() == capacity())
+      reserve(size() == 0 ? 1 : size() * 2);
 
-  iterator insert(iterator pos, size_type count, const_reference value) {
-    if (count == 0) return pos;
-    if (pos > end() || pos < begin())
-      throw std::out_of_range("position is out of range");
-    if (size() + count > max_size())
-      throw std::length_error("size is too large");
+    vector_base<T, A> tmp (vb.alloc, size() - index);
+    std::uninitialized_copy(vb.elem + index, vb.space, tmp.elem);
+    std::uninitialized_copy(tmp.elem, tmp.space, vb.elem + index + 1);
+    vb.alloc.construct(vb.elem + index, std::move(value));
+    ++vb.space;
 
-    const difference_type index = pos - begin();
-
-    /* std::cout << "size = " << size() << std::endl; */
-    /* std::cout << "capacity = " << capacity() << std::endl; */
-    /* std::cout << "count = " << count << std::endl; */
-    /* if (size() + count > capacity()) { */
-      size_type new_cap = std::max(2 * capacity(), size() + count);
-      vector_base<T, A> new_vb(vb.alloc, new_cap);
-      new_vb.space = std::uninitialized_copy(begin(), pos, new_vb.elem);
-      std::uninitialized_fill_n(new_vb.space, count, value);
-      std::uninitialized_copy(pos, end(), new_vb.space + count);
-      new_vb.space += count + (end() - pos);
-      new_vb.last = new_vb.elem + new_cap;
-      std::swap(vb, new_vb);
-    /* } else { */
-    /*   std::move_backward(begin() + index, end(), end() + count); */
-    /*   std::uninitialized_fill_n(pos, count, value); */
-    /*   vb.space += count; */
-    /*   std::cout << "IM HERE\n"; */
-    /* } */
     return begin() + index;
   }
 
-  iterator insert(iterator pos, iterator first, iterator last) {
-    if (first >= last) return pos;
-    if (pos > end() || pos < begin())
-      throw std::out_of_range("position is out of range");
-    if (size() + (last - first) > max_size())
-      throw std::length_error("size is too large");
+  template <class... Args>
+  iterator emplace(iterator pos, Args&&... args) {
+      if (pos > end()) {
+          throw std::out_of_range("emplace");
+      }
+      iterator ret;
+      difference_type id = pos - begin();
 
-    const difference_type sz = last - first;
-    const difference_type index = pos - begin();
-
-    /* if (size() + sz > capacity()) { */
-      size_type new_cap = std::max(2 * capacity(), size() + sz);
-      vector_base<T, A> new_vb(vb.alloc, new_cap);
-      std::uninitialized_copy(vb.elem, vb.elem + index, new_vb.elem);
-      std::uninitialized_copy(first, last, new_vb.elem + index);
-      std::uninitialized_copy(vb.elem + index, vb.space,
-                              new_vb.elem + index + sz);
-      new_vb.space = new_vb.elem + size() + sz;
-      for (pointer p = vb.elem; p != vb.space; ++p) vb.alloc.destroy(p);
-      vb.alloc.deallocate(vb.elem, vb.last - vb.elem);
-      vb = std::move(new_vb);
-    /* } else { */
-    /*   std::move_backward(begin() + index, end(), end() + sz); */
-    /*   std::uninitialized_copy(first, last, pos); */
-    /*   vb.space += sz; */
-    /* } */
-    return begin() + index;
+      for (auto&& item : {std::forward<Args>(args)...})
+          ret = insert(begin() + id, item);
+      return ret;
   }
-
-  iterator insert(iterator pos, std::initializer_list<T> ilist) {
-    vector tmp(ilist);
-    return insert(pos, tmp.begin(), tmp.end());
-  }
-
-template <class... Args>
-iterator emplace(iterator pos, Args&&... args) {
-    if (pos > end()) {
-        throw std::out_of_range("emplace");
-    }
-    iterator ret;
-    difference_type id = pos - begin();
-
-    for (auto& item : {std::forward<Args>(args)...})
-        ret = insert(begin() + id, item);
-    return ret;
-}
 
   template <class... Args>
   reference emplace_back(Args&&... args) {
@@ -464,11 +389,13 @@ iterator emplace(iterator pos, Args&&... args) {
       ptr -= n;
       return *this;
     }
+
     iterator operator-(size_type n) const {
       iterator tmp = *this;
       tmp -= n;
       return tmp;
     }
+
     difference_type operator-(iterator other) {
       if (other.ptr == nullptr || ptr == nullptr)
         return 0;

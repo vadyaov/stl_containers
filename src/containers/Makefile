@@ -13,10 +13,10 @@ TEST_DIR=../test/
 
 all: test
 
-test: test_vector
+test: test_vector test_list
 
 test_list:
-	$(CC) $(FLAGS) -I. list.h $(TEST_DIR)test_list.cc $(TEST_FLAGS) -o test_list
+	$(CC) $(FLAGS) -I. list.h $(TEST_DIR)test_list.cc -fsanitize=address -g $(TEST_FLAGS) -o test_list
 	./test_list
 
 test_set:

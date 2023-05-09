@@ -1,23 +1,6 @@
 #include <gtest/gtest.h>
 #include <vector>
-#include <iostream>
 #include "../containers/vector.h"
-
-/* struct I { */
-/*   int value; */
-/*   I() : value{} {} */
-/*   explicit I(int a) : value{a} {} */
-/*   I(const I& other) : value{other.value} {} */
-/*   I(I&& other) : value{std::move(other.value)} {} */
-/*   I& operator=(const I& other) { */
-/*     value = other.value; */
-/*     return *this; */
-/*   } */
-/*   I& operator=(I&& other) noexcept { */
-/*     value = std::move(other.value); */
-/*     return *this; */
-/*   } */
-/* }; */
 
 struct B {
   public:
@@ -488,8 +471,6 @@ TEST_F(VectorTest, resize) {
     ASSERT_EQ(vec0_[i], i + 1);
 
   vec0_.resize(20, -1);
-  /* ASSERT_EQ(vec0_.size(), 20); */
-  /* std::cout << "size: " << vec0_.size() << std::endl; */
   for (size_t i = 0; i < sz - 3; ++i)
     ASSERT_EQ(vec0_[i], i + 1);
 

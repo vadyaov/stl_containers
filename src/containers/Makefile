@@ -13,18 +13,22 @@ TEST_DIR=../test/
 
 all: test
 
-test: test_vector test_list
+test: test_vector test_list test_queue
 
 test_list:
-	$(CC) $(FLAGS) -I. list.h $(TEST_DIR)test_list.cc -fsanitize=address -g $(TEST_FLAGS) -o test_list
+	$(CC) $(FLAGS) -I. list.h $(TEST_DIR)test_list.cc  $(TEST_FLAGS) -o test_list
 	./test_list
 
 test_set:
 	$(CC) $(FLAGS) -I. -I../RBTree set.h ../RBTree/rb_tree.h $(TEST_DIR)test_set.cc $(TEST_FLAGS) -o test_set
 	./test_set
 
+test_queue:
+	$(CC) $(FLAGS) -I. queue.h $(TEST_DIR)test_queue.cc  $(TEST_FLAGS) -o test_queue
+	./test_queue
+
 test_vector:
-	$(CC) $(FLAGS) -I. vector.h $(TEST_DIR)test_vector.cc -fsanitize=address -g $(TEST_FLAGS) -o test_vector
+	$(CC) $(FLAGS) -I. vector.h $(TEST_DIR)test_vector.cc  $(TEST_FLAGS) -o test_vector
 	./test_vector
 
 gcov_report:FLAGS += $(GCOV)
@@ -49,5 +53,5 @@ endif
 
 
 clean:
-	rm -rf objects *.gcno *.gcda *.o *.info report test_vector test_set test_list \
+	rm -rf objects *.gcno *.gcda *.o *.info report test_queue test_vector test_set test_list \
 	../RBTree/*.gch ../RBTree/s21_test_tree

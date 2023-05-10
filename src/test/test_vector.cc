@@ -58,12 +58,10 @@ class VectorTest : public ::testing::Test {
     s21::vector<std::string> vec5_;
 };
 
-// Gtest needs this function overload so had to put struct outside of SetUp
 bool operator==(const A &lhs, const A &rhs) {
     return rhs.s == lhs.s;
 }
 
-// Gtest needs this function overload so had to put struct outside of SetUp
 bool operator==(const B &lhs, const B &rhs) {
     return rhs.s == lhs.s;
 }

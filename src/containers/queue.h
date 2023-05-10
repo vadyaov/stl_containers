@@ -30,7 +30,7 @@ namespace s21 {
 
         queue( queue&& other ) noexcept : q{std::move(other.q)} {}
 
-        queue& operator=( queue&& other ) {
+        queue& operator=( queue&& other ) noexcept {
           q = std::move(other.q);
           return *this;
         }
@@ -61,10 +61,6 @@ namespace s21 {
         void pop() { q.pop_front(); }
 
         void swap( queue& other ) noexcept { std::swap(q, other.q); }
-
-        void print() {
-          q.print();
-        }
 
       private:
        Container q; 

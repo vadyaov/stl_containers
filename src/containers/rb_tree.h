@@ -242,6 +242,7 @@ template<
     }
 
     std::pair<iterator, bool> insert(const std::pair<const K, V>& value, bool unique = true) {
+      std::cout << value.first << ' ' << value.second << std::endl;
       node_ptr t = alloc.allocate(1);
       alloc.construct(t, RBNode<K, V>(value));
       if (empty()) {
@@ -254,19 +255,20 @@ template<
 
         while (p != nullptr) {
           q = p;
+
+          // checking for unique
+          if (q->key == t->key && unique == true) {
+            /* std::cout << "Not unique key. Skip\n"; */
+            /* t->printData(); */
+            alloc.deallocate(t, 1);
+            return std::pair<iterator, bool>(iterator(q), false);
+          }
+
           if (comp(p->key, t->key))
             p = p->right;
           else
             p = p->left;
         }
-        // checking for unique
-        if (q->key == t->key && unique == true) {
-          /* std::cout << "Not unique key. Skip\n"; */
-          /* t->printData(); */
-          alloc.deallocate(t, 1);
-          return std::pair<iterator, bool>(iterator(q), false);
-        }
-
         t->parent = q;
         if (comp(q->key, t->key))
           q->right = t;
@@ -580,9 +582,10 @@ template<
           }
 
         Color node_color = node->color;
+        node_ptr node_parent = node->parent;
         alloc.deallocate(node, 1);
         if (root != nullptr && node_color == Color::BLACK) {
-          fixDeleting(node->parent, node_brother);
+          fixDeleting(node_parent, node_brother);
         }
       }
 
@@ -613,7 +616,7 @@ template<
 
     }
 
-        void fixDeleting(node_ptr node, node_ptr brother) {
+    void fixDeleting(node_ptr node, node_ptr brother) {
       std::cout << "\nInside FixDeleting...\n";
 
       if (isRed(node) && isBlack(brother) && isBlack(brother->left) &&
@@ -621,16 +624,30 @@ template<
         node->color = Color::BLACK;
         brother->color = Color::RED;
       } else if (isRed(node) && isBlack(brother) && oneChildRed(brother)) {
-        if (brother == node->left && isRed(brother->left)) {
-            node->color = Color::BLACK;
-            brother->color = Color::RED;
-            brother->left->color = Color::BLACK;
-            rotateRight(node);
-        } else if (brother == node->right && isRed(brother->right)) {
-            node->color = Color::BLACK;
+        /* std::cout << "1.\n"; */
+        node->color = Color::BLACK;
+        if (brother == node->left) {
+          if (isRed(brother->left)) {
+              brother->color = Color::RED;
+              brother->left->color = Color::BLACK;
+              rotateRight(node);
+            } else if (isRed(brother->right)) {
+              /* brother->right->color = Color::BLACK; */
+              rotateLeft(brother);
+              rotateRight(node);
+            }
+        } else if (brother == node->right) {
+          /* std::cout << "2.\n"; */
+          if (isRed(brother->right)) {
             brother->color = Color::RED;
             brother->right->color = Color::BLACK;
             rotateLeft(node);
+          } else if (isRed(brother->left)) {
+            /* std::cout << "3.\n"; */
+            /* brother->left->color = Color::BLACK; */
+            rotateRight(brother);
+            rotateLeft(node);
+          }
         }
       } else if (node->color == Color::BLACK && isRed(brother)) {
         // ЧК3
@@ -657,6 +674,7 @@ template<
             rotateLeft(node);
         }
       } else if (isBlack(node) && isBlack(brother)) {
+          std::cout << "I must be here\n";
         if (brother == node->left && isRed(brother->right)) {
           brother->right->color = Color::BLACK;
           rotateLeft(brother);

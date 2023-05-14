@@ -13,7 +13,11 @@ TEST_DIR=../test/
 
 all: test
 
-test: test_vector test_list test_queue
+test: test_tree #test_vector test_list test_queue
+
+test_tree:
+	$(CC) $(FLAGS) -I. rb_tree.h $(TEST_DIR)test_tree.cc  -fsanitize=address -g $(TEST_FLAGS) -o test_rb_tree
+	./test_rb_tree
 
 test_list:
 	$(CC) $(FLAGS) -I. list.h $(TEST_DIR)test_list.cc  $(TEST_FLAGS) -o test_list
@@ -54,4 +58,4 @@ endif
 
 clean:
 	rm -rf objects *.gcno *.gcda *.o *.info report test_queue test_vector test_set test_list \
-	../RBTree/*.gch ../RBTree/s21_test_tree
+	test_tree

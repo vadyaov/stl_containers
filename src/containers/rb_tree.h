@@ -242,7 +242,7 @@ template<
     }
 
     std::pair<iterator, bool> insert(const std::pair<const K, V>& value, bool unique = true) {
-      std::cout << value.first << ' ' << value.second << std::endl;
+      /* std::cout << value.first << ' ' << value.second << std::endl; */
       node_ptr t = alloc.allocate(1);
       alloc.construct(t, RBNode<K, V>(value));
       if (empty()) {
@@ -256,10 +256,7 @@ template<
         while (p != nullptr) {
           q = p;
 
-          // checking for unique
           if (q->key == t->key && unique == true) {
-            /* std::cout << "Not unique key. Skip\n"; */
-            /* t->printData(); */
             alloc.deallocate(t, 1);
             return std::pair<iterator, bool>(iterator(q), false);
           }
@@ -269,6 +266,7 @@ template<
           else
             p = p->left;
         }
+
         t->parent = q;
         if (comp(q->key, t->key))
           q->right = t;
@@ -363,6 +361,7 @@ template<
 
       if (tmp == nullptr) return 0;
 
+      /* std::cout << "Key to delete: " << tmp->key << std::endl; */
       removeNode(tmp);
 
       return 1;
@@ -616,8 +615,231 @@ template<
 
     }
 
+/* void fixDeleting(node_ptr parent, node_ptr sibling) { */
+/*     if (sibling->color == Color::RED) { */
+/*         // Случай 1: Брат узла является красным */
+/*         if (parent->left == sibling) { */
+/*             // Левый поворот вокруг родителя */
+/*             node_ptr r = sibling->right; */
+/*             sibling->right = r->left; */
+/*             if (r->left != nullptr) { */
+/*                 r->left->parent = sibling; */
+/*             } */
+/*             r->parent = parent; */
+/*             if (parent->parent == nullptr) { */
+/*                 // Мы повернули корень дерева */
+/*                 r->parent = nullptr; */
+/*             } else if (parent->parent->left == parent) { */
+/*                 parent->parent->left = r; */
+/*             } else { */
+/*                 parent->parent->right = r; */
+/*             } */
+/*             r->left = sibling; */
+/*             sibling->parent = r; */
+            
+/*             // Перекрашиваем узлы */
+/*             r->color = sibling->color; */
+/*             sibling->color = Color::RED; */
+/*         } else { */
+/*             // Правый поворот вокруг родителя */
+/*             node_ptr l = sibling->left; */
+/*             sibling->left = l->right; */
+/*             if (l->right != nullptr) { */
+/*                 l->right->parent = sibling; */
+/*             } */
+/*             l->parent = parent; */
+/*             if (parent->parent == nullptr) { */
+/*                 // Мы повернули корень дерева */
+/*                 l->parent = nullptr; */
+/*             } else if (parent->parent->left == parent) { */
+/*                 parent->parent->left = l; */
+/*             } else { */
+/*                 parent->parent->right = l; */
+/*             } */
+/*             l->right = sibling; */
+/*             sibling->parent = l; */
+            
+/*             // Перекрашиваем узлы */
+/*             l->color = sibling->color; */
+/*             sibling->color = Color::RED; */
+/*         } */
+        
+/*         // Обновляем ссылку на брата после поворота */
+/*         if (parent->left == sibling) { */
+/*             sibling = parent->right; */
+/*         } else { */
+/*             sibling = parent->left; */
+/*         } */
+/*     } */
+    
+/*     // Случай 2: Брат узла является черным и имеет двух черных потомков */
+/*     if ((sibling->left && sibling->left->color == Color::BLACK) && (sibling->right && sibling->right->color == Color::BLACK)) { */
+/*         sibling->color = Color::RED; */
+        
+/*         // Если родитель черного узла является черным, продолжаем балансировку от него */
+/*         if (parent->color == Color::BLACK) { */
+/*             fixDeleting(parent->parent, (parent->parent->left == parent) ? parent->parent->right : parent->parent->left); */
+/*             return; */
+/*         } else { */
+/* parent->color = Color::BLACK; */
+/*         } */
+/*         return; */
+/*     } */
+    
+/*     // Случай 3: Брат узла является черным, его левый потомок красный, а правый - черный */
+/*     if (sibling->left && sibling->left->color == Color::RED && (!sibling->right || sibling->right->color == Color::BLACK)) { */
+/*         if (parent->left == sibling) { */
+/*             // Правый поворот вокруг брата */
+/*             node_ptr r = sibling->right; */
+/*             sibling->right = r->left; */
+/*             if (r->left != nullptr) { */
+/*                 r->left->parent = sibling; */
+/*             } */
+/*             r->parent = sibling->parent; */
+/*             if (sibling->parent->parent == nullptr) { */
+/*                 // Мы повернули корень дерева */
+/*                 r->parent = nullptr; */
+/*             } else if (sibling->parent->parent->left == sibling->parent) { */
+/*                 sibling->parent->parent->left = r; */
+/*             } else { */
+/*                 sibling->parent->parent->right = r; */
+/*             } */
+/*             r->left = sibling; */
+/*             sibling->parent = r; */
+/*         } else { */
+/*             // Левый поворот вокруг брата */
+/*             node_ptr l = sibling->left; */
+/*             sibling->left = l->right; */
+/*             if (l->right != nullptr) { */
+/*                 l->right->parent = sibling; */
+/*             } */
+/*             l->parent = sibling->parent; */
+/*             if (sibling->parent->parent == nullptr) { */
+/*                 // Мы повернули корень дерева */
+/*                 l->parent = nullptr; */
+/*             } else if (sibling->parent->parent->left == sibling->parent) { */
+/*                 sibling->parent->parent->left = l; */
+/*             } else { */
+/*                 sibling->parent->parent->right = l; */
+/*             } */
+/*             l->right = sibling; */
+/*             sibling->parent = l; */
+/*         } */
+        
+/*         // Перекрашиваем узлы */
+/*         sibling->color = parent->color; */
+/*         parent->color = Color::BLACK; */
+/*         if (sibling->left) */
+/*         sibling->left->color = Color::BLACK; */
+/*         return; */
+/*     } */
+    
+/*     // Случай 4: Брат узла является черным, его правый потомок красный */
+/*     if (sibling->right && sibling->right->color == Color::RED) { */
+/*         if (parent->left == sibling) { */
+/*             // Левый поворот вокруг родителя */
+/*             node_ptr r = sibling->right; */
+/*             sibling->right = r->left; */
+/*             if (r->left != nullptr) { */
+/*                 r->left->parent = sibling; */
+/*             } */
+/*             r->parent = parent; */
+/*             if (parent->parent == nullptr) { */
+/*                 // Мы повернули корень дерева */
+/*                 r->parent = nullptr; */
+/*             } else if (parent->parent->left == parent) { */
+/*                 parent->parent->left = r; */
+/*             } else { */
+/*                 parent->parent->right = r; */
+/*             } */
+/*             r->left = sibling; */
+/*             sibling->parent = r; */
+            
+/*             // Перекрашиваем узлы */
+/*             r->color = sibling->color; */
+/*             sibling->color = Color::BLACK; */
+/*             r->right->color = Color::BLACK; */
+/*         } else { */
+/*             // Правый поворот вокруг родителя */
+/*             node_ptr l = sibling->left; */
+/*             sibling->left = l->right; */
+/*             if (l->right != nullptr) { */
+/* l->right->parent = sibling; */
+/*             } */
+/*             l->parent = parent; */
+/*             if (parent->parent == nullptr) { */
+/*                 // Мы повернули корень дерева */
+/*                 l->parent = nullptr; */
+/*             } else if (parent->parent->left == parent) { */
+/*                 parent->parent->left = l; */
+/*             } else { */
+/*                 parent->parent->right = l; */
+/*             } */
+/*             l->right = sibling; */
+/*             sibling->parent = l; */
+            
+/*             // Перекрашиваем узлы */
+/*             l->color = sibling->color; */
+/*             sibling->color = Color::BLACK; */
+/*             l->left->color = Color::BLACK; */
+/*         } */
+        
+/*         // Обновляем ссылку на брата после поворота */
+/*         if (parent->left == sibling) { */
+/*             sibling = parent->right; */
+/*         } else { */
+/*             sibling = parent->left; */
+/*         } */
+/*     } */
+    
+/*     // Случай 5: Брат узла является черным, его левый потомок красный (может быть любого цвета), а правый - черный */
+/*     if (sibling->left && sibling->left->color == Color::RED) { */
+/*         if (parent->left == sibling) { */
+/*             // Правый поворот вокруг брата */
+/*             node_ptr r = sibling->right; */
+/*             sibling->right = r->left; */
+/*             if (r->left != nullptr) { */
+/*                 r->left->parent = sibling; */
+/*             } */
+/*             r->parent = sibling->parent; */
+/*             if (sibling->parent->parent == nullptr) { */
+/*                 // Мы повернули корень дерева */
+/*                 r->parent = nullptr; */
+/*             } else if (sibling->parent->parent->left == sibling->parent) { */
+/*                 sibling->parent->parent->left = r; */
+/*             } else { */
+/*                 sibling->parent->parent->right = r; */
+/*             } */
+/*             r->left = sibling; */
+/*             sibling->parent = r; */
+/*         } else { */
+/*             // Левый поворот вокруг брата */
+/*             node_ptr l = sibling->left; */
+/*             sibling->left = l->right; */
+/*             if (l->right != nullptr) { */
+/*                 l->right->parent = sibling; */
+/*             } */
+/*             l->parent = sibling->parent; */
+/*             if (sibling->parent->parent == nullptr) { */
+/*                 // Мы повернули корень дерева */
+/*                 l->parent = nullptr; */
+/*             } else if (sibling->parent->parent->left == sibling->parent) { */
+/*                 sibling->parent->parent->left = l; */
+/*             } else { */
+/*                 sibling->parent->parent->right = l; */
+/*             } */
+/*             l->right = sibling; */
+/*             sibling->parent = l; */
+/*         } */
+        
+/*         // Перекрашиваем узлы */
+/*         sibling->color = Color::RED; */
+/*         sibling->left->color = Color::BLACK; */
+/*     } */
+/* } */
+
     void fixDeleting(node_ptr node, node_ptr brother) {
-      std::cout << "\nInside FixDeleting...\n";
+      /* std::cout << "\nInside FixDeleting...\n"; */
 
       if (isRed(node) && isBlack(brother) && isBlack(brother->left) &&
           isBlack(brother->right)) {
@@ -650,14 +872,18 @@ template<
           }
         }
       } else if (node->color == Color::BLACK && isRed(brother)) {
+        /* std::cout << "node->key wait -28: " << node->key << std::endl; */
+        /* std::cout << "brother->key wait -4: " << brother->key << std::endl; */
         // ЧК3
         if (brother == node->left && brother->right != nullptr &&
             isBlack(brother->right->left) && isBlack(brother->right->right)) {
+          /* std::cout << "no.\n"; */
           brother->color = Color::BLACK;
           brother->right->color = Color::RED;
           rotateRight(node);
         } else if (brother == node->right && brother->left != nullptr &&
             isBlack(brother->left->left) && isBlack(brother->left->right)) {
+          /* std::cout << "yeah" << std::endl; */
           brother->color = Color::BLACK;
           brother->left->color = Color::RED;
           rotateLeft(node);
@@ -674,19 +900,25 @@ template<
             rotateLeft(node);
         }
       } else if (isBlack(node) && isBlack(brother)) {
-          std::cout << "I must be here\n";
+          /* std::cout << "I must be here\n"; */
         if (brother == node->left && isRed(brother->right)) {
           brother->right->color = Color::BLACK;
           rotateLeft(brother);
+          rotateRight(node);
+        } else if (brother == node->left && isRed(brother->left)) {
+          node->color = Color::RED;
           rotateRight(node);
         } else if (brother == node->right && isRed(brother->left)) {
           brother->left->color = Color::BLACK;
           rotateRight(brother);
           rotateLeft(node);
+        } else if (brother == node->right && isRed(brother->right)) {
+          node->color = Color::RED;
+          rotateLeft(node);
         } else if (isBlack(brother->left) && isBlack(brother->right)) {
           brother->color = Color::RED;
-          std::cout << "\nRecursion....\n";
           if (node->parent != nullptr) {
+            /* std::cout << "\nRecursion....\n"; */
             node_ptr node_brother = node->parent->right == node ?
                                     node->parent->left : node->parent->right;
             fixDeleting(node->parent, node_brother);

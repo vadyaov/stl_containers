@@ -42,25 +42,29 @@ namespace s21 {
         return a[pos];
       }
 
-/*       constexpr reference front() { */
-/*       } */
+      constexpr reference front() {
+        return a[0];
+      }
 
-/*       constexpr const_reference front() const { */
-/*       } */
+      constexpr const_reference front() const {
+        return a[0];
+      }
 
-/*       constexpr reference back() { */
-/*       } */
+      constexpr reference back() {
+        return a[N - 1];
+      }
 
-/*       constexpr const_reference back() const { */
-/*       } */
+      constexpr const_reference back() const {
+        return a[N - 1];
+      }
 
-/*       constexpr pointer data() noexcept { */
-/*         return &a; */
-/*       } */
+      constexpr pointer data() noexcept {
+        return a;
+      }
 
-/*       constexpr const_pointer data() const noexcept { */
-/*         return &a; */
-/*       } */
+      constexpr const_pointer data() const noexcept {
+        return a;
+      }
 
       constexpr iterator begin() noexcept {
         return iterator(a);
@@ -84,30 +88,6 @@ namespace s21 {
 
       constexpr const_iterator cend() const noexcept {
         return const_iterator(a + N);
-      }
-
-      constexpr reverse_iterator rbegin() noexcept {
-        return reverse_iterator(a + N - 1);
-      }
-
-      constexpr const_reverse_iterator rbegin() const noexcept {
-        return const_reverse_iterator(a + N - 1);
-      }
-
-      constexpr const_reverse_iterator crbegin() const noexcept {
-        return const_reverse_iterator(a + N - 1);
-      }
-
-      constexpr reverse_iterator rend() noexcept {
-        return reverse_iterator(a - 1);
-      }
-
-      constexpr const_reverse_iterator rend() const noexcept {
-        return const_reverse_iterator(a - 1);
-      }
-
-      constexpr const_reverse_iterator crend() const noexcept {
-        return const_reverse_iterator(a - 1);
       }
 
       constexpr bool empty() const noexcept {
@@ -155,6 +135,28 @@ namespace s21 {
       return tmp;
     }
 
+    iterator& operator+=(size_type n) {
+      ptr += n;
+      return *this;
+    }
+
+    iterator operator+(size_type n) const {
+      iterator tmp = *this;
+      tmp += n;
+      return tmp;
+    }
+
+    iterator& operator-=(size_type n) {
+      ptr -= n;
+      return *this;
+    }
+
+    iterator operator-(size_type n) const {
+      iterator tmp = *this;
+      tmp -= n;
+      return tmp;
+    }
+
     reference operator*() const { return *ptr; }
     pointer operator->() const { return ptr; }
 
@@ -191,6 +193,28 @@ namespace s21 {
       return tmp;
     }
 
+    const_iterator& operator+=(size_type n) {
+      ptr += n;
+      return *this;
+    }
+
+    const_iterator operator+(size_type n) const {
+      const_iterator tmp = *this;
+      tmp += n;
+      return tmp;
+    }
+
+    const_iterator& operator-=(size_type n) {
+      ptr -= n;
+      return *this;
+    }
+
+    const_iterator operator-(size_type n) const {
+      const_iterator tmp = *this;
+      tmp -= n;
+      return tmp;
+    }
+
     const_reference operator*() const { return *ptr; }
     const_pointer operator->() const { return ptr; }
 
@@ -198,79 +222,7 @@ namespace s21 {
     const_pointer ptr;
   };
 
-  class reverse_iterator {
-  public:
-    reverse_iterator() : ptr{nullptr} {}
-    explicit reverse_iterator(pointer p) : ptr{p} {}
-    reverse_iterator(const reverse_iterator& iter) : ptr{iter.ptr} {}
-
-    reverse_iterator& operator=(const reverse_iterator& other) {
-      ptr = other.ptr;
-      return *this;
-    }
-
-    bool operator==(const reverse_iterator& other) const { return ptr == other.ptr; }
-    bool operator!=(const reverse_iterator& other) const { return ptr != other.ptr; }
-
-    reverse_iterator& operator++() {--ptr; return *this;}
-    reverse_iterator& operator--() {++ptr; return *this;}
-
-    reverse_iterator operator++(int) {
-      reverse_iterator tmp {*this};
-      --ptr;
-      return tmp;
-    }
-
-    reverse_iterator operator--(int) {
-      reverse_iterator tmp {*this};
-      ++ptr;
-      return tmp;
-    }
-
-    reference operator*() const { return *ptr; }
-    pointer operator->() const { return ptr; }
-
-   private:
-    pointer ptr;
-  };
-
-  class const_reverse_iterator {
-  public:
-    const_reverse_iterator() : ptr{nullptr} {}
-    explicit const_reverse_iterator(pointer p) : ptr{p} {}
-    const_reverse_iterator(const const_reverse_iterator& iter) : ptr{iter.ptr} {}
-
-    const_reverse_iterator& operator=(const const_reverse_iterator& other) {
-      ptr = other.ptr;
-      return *this;
-    }
-
-    bool operator==(const const_reverse_iterator& other) const { return ptr == other.ptr; }
-    bool operator!=(const const_reverse_iterator& other) const { return ptr != other.ptr; }
-
-    const_reverse_iterator& operator++() {--ptr; return *this;}
-    const_reverse_iterator& operator--() {++ptr; return *this;}
-
-    const_reverse_iterator operator++(int) {
-      const_reverse_iterator tmp {*this};
-      --ptr;
-      return tmp;
-    }
-
-    const_reverse_iterator operator--(int) {
-      const_reverse_iterator tmp {*this};
-      ++ptr;
-      return tmp;
-    }
-
-    const_reference operator*() const { return *ptr; }
-    const_pointer operator->() const { return ptr; }
-
-   private:
-    pointer ptr;
-  };
-
-  };
+};
 
   template< class T, std::size_t N >
     bool operator==( const s21::array<T, N>& lhs, const s21::array<T, N>& rhs ) {

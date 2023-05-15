@@ -141,20 +141,83 @@ TEST_F(TreeTest, begin) {
 }
 
 TEST_F(TreeTest, erase) {
-  for (int i = 0; i < 11; ++i) {
-    t0.insert(ii_pair(GetRandomValue(), GetRandomValue()));
+  
+  for (int i = 0; i < 50; ++i) {
+    t0.insert(ii_pair(GetRandomValue(), 14));
     ASSERT_EQ(t0.rb_assert(t0.get_root()) == 0, false);
   }
 
-  for (int i = 0; i < 51; ++i) {
+  for (int i = 0; i < 25; ++i) {
     t0.erase(i);
-    /* std::cout << "AFTER ERASE\n"; */
-    /* t0.printTree(); */
     ASSERT_EQ(!t0.rb_assert(t0.get_root()), false);
   }
-  t0.printTree();
+
+  for (int i = 50; i >= 25; --i) {
+    t0.erase(i);
+    ASSERT_EQ(!t0.rb_assert(t0.get_root()), false);
+  }
 }
 
+TEST_F(TreeTest, iterator) {
+    t0.insert(ii_pair(7, 0));
+    t0.insert(ii_pair(10, 0));
+    t0.insert(ii_pair(2, 1));
+    t0.insert(ii_pair(5, 2));
+    t0.insert(ii_pair(8, -1));
+    t0.insert(ii_pair(17, 3));
+    t0.insert(ii_pair(11, 4));
+    t0.insert(ii_pair(11, 2));
+    RBTree<int, int> b(t0);
+    auto it1 = t0.cbegin();
+    auto it2 = b.cbegin();
+    it1++;
+    it2++;
+    ++it1;
+    ++it2;
+    EXPECT_EQ(*it1, 7);
+    EXPECT_EQ(7, *it2);
+    EXPECT_EQ(*it1, *it2);
+    --it1;
+    --it2;
+    EXPECT_EQ(*it1, 5);
+    EXPECT_EQ(*it2, 5);
+    EXPECT_EQ(*it1, *it2);
+    for (auto i : t0) {
+      t1.insert(istr_pair(i, "HAHA"));
+    }
+}
+
+TEST_F(TreeTest, emplace_unique) {
+  t2.unique_emplace(stri_pair("hello", 1));
+  t2.unique_emplace(stri_pair("world", 1));
+  t2.unique_emplace(stri_pair("dog", 1));
+  t2.unique_emplace(stri_pair("hello", 1));
+  t2.unique_emplace(stri_pair("abob aboboa", 2));
+  ASSERT_EQ(!t2.rb_assert(t2.get_root()), false);
+  ASSERT_EQ(t2.size(), 4);
+}
+
+TEST_F(TreeTest, emplace_nounique) {
+  t2.nounique_emplace(stri_pair("hello", 1));
+  t2.nounique_emplace(stri_pair("world", 1));
+  t2.nounique_emplace(stri_pair("dog", 1));
+  t2.nounique_emplace(stri_pair("hello", 1));
+  t2.nounique_emplace(stri_pair("abob afgakjfl", 2));
+  ASSERT_EQ(!t2.rb_assert(t2.get_root()), false);
+  ASSERT_EQ(t2.size(), 5);
+}
+
+TEST_F(TreeTest, beaces_operator) {
+  t0[1] = 10;
+  t0[2] = 20;
+  t0[3] = 30;
+  t0[4] = 40;
+  ASSERT_EQ(t0.size(), 4);
+  ASSERT_EQ(t0[4], 40);
+
+  const RBTree<int, int> t0_cpy = t0;
+  ASSERT_EQ(t0[1], 10);
+}
 
 int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);

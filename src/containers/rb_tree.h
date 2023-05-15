@@ -121,8 +121,6 @@ template<
 
     class iterator;
     class const_iterator;
-    class reverse_iterator;
-    class const_reverse_iterator;
 
     RBTree() : root{nullptr}, alloc{}, comp{} {}
 
@@ -233,14 +231,6 @@ template<
       return const_iterator();
     }
 
-    reverse_iterator rbegin() noexcept {
-      return reverse_iterator(root->max());
-    }
-
-    reverse_iterator rend() noexcept {
-      return reverse_iterator();
-    }
-
     std::pair<iterator, bool> insert(const std::pair<const K, V>& value, bool unique = true) {
       /* std::cout << value.first << ' ' << value.second << std::endl; */
       node_ptr t = alloc.allocate(1);
@@ -279,7 +269,7 @@ template<
     template< class... Args >
       std::pair<iterator,bool> unique_emplace( Args&&... args ) {
         RBNode<K,V>* newNode = alloc.allocate(1);
-        alloc.construct(newNode, RBNode<K,V>(std::forward<Args>(args)..., V()));
+        alloc.construct(newNode, RBNode<K,V>(std::forward<Args>(args)...));
 
         if (empty()) {
           newNode->color = Color::BLACK;
@@ -317,7 +307,7 @@ template<
     template< class... Args >
       std::pair<iterator,bool> nounique_emplace( Args&&... args ) {
         RBNode<K,V>* newNode = alloc.allocate(1);
-        alloc.construct(newNode, RBNode<K,V>(std::forward<Args>(args)..., V()));
+        alloc.construct(newNode, RBNode<K,V>(std::forward<Args>(args)...));
 
         if (empty()) {
           newNode->color = Color::BLACK;
@@ -362,7 +352,7 @@ template<
       if (tmp == nullptr) return 0;
 
       /* std::cout << "Key to delete: " << tmp->key << std::endl; */
-      std::cout << "deleting node: " << tmp->key << std::endl;
+      /* std::cout << "deleting node: " << tmp->key << std::endl; */
       removeNode(tmp);
 
       return 1;
@@ -798,7 +788,7 @@ template<
     class iterator {
    public:
     iterator() : ptr{nullptr} {}
-    explicit iterator(node_ptr p) : ptr{p} {}
+    iterator(node_ptr p) : ptr{p} {}
     iterator(const iterator &iter) : ptr{iter.ptr} {}
     ~iterator() { ptr = nullptr; }
 
@@ -845,10 +835,10 @@ template<
     class const_iterator {
    public:
     const_iterator() : ptr{nullptr} {}
-    explicit const_iterator(node_ptr p) : ptr{p} {
+    const_iterator(node_ptr p) : ptr{p} {
     }
 
-    explicit const_iterator(const const_iterator &iter) : ptr{iter.ptr} {}
+    const_iterator(const const_iterator &iter) : ptr{iter.ptr} {}
 
     ~const_iterator() { ptr = nullptr; }
 
@@ -885,53 +875,6 @@ template<
     const K& operator*() const {
       node_ptr tmp = const_cast<node_ptr>(ptr);
       return tmp->key;
-    }
-
-    node_ptr get_ptr() const { return ptr; }
-
-   private:
-    node_ptr ptr;
-    };
-
-    class reverse_iterator {
-   public:
-    reverse_iterator() : ptr{nullptr} {}
-    explicit reverse_iterator(node_ptr p) : ptr{p} {}
-    reverse_iterator(const reverse_iterator &iter) : ptr{iter.ptr} {}
-    ~reverse_iterator() { ptr = nullptr; }
-
-    reverse_iterator &operator=(const reverse_iterator &other) {
-      ptr = other.ptr;
-      return *this;
-    }
-
-    bool operator==(const reverse_iterator &other) const { return ptr == other.ptr; }
-    bool operator!=(const reverse_iterator &other) const { return ptr != other.ptr; }
-
-    reverse_iterator &operator++() {
-      ptr = ptr->predesessor();
-      return *this;
-    }
-
-    reverse_iterator operator++(int) {
-      reverse_iterator tmp = *this;
-      ptr = ptr->predesessor();
-      return tmp;
-    }
-
-    reverse_iterator &operator--() {
-      ptr = ptr->successor();
-      return *this;
-    }
-
-    reverse_iterator operator--(int) {
-      reverse_iterator tmp = *this;
-      ptr = ptr->successor();
-      return tmp;
-    }
-
-    K& operator*() const {
-      return ptr->key;
     }
 
     node_ptr get_ptr() const { return ptr; }

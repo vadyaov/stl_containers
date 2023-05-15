@@ -1,7 +1,7 @@
 #ifndef _STL_CONTAINERS_CONTAINERS_MAP_H_
 #define _STL_CONTAINERS_CONTAINERS_MAP_H_
 
-#include "../RBTree/rb_tree.h"
+#include "rb_tree.h"
 
 namespace s21 {
 
@@ -19,9 +19,6 @@ namespace s21 {
       typedef typename RBTree<Key, T, Compare>::const_reference const_reference;
       typedef typename RBTree<Key, T, Compare>::iterator iterator;
       typedef typename RBTree<Key, T, Compare>::const_iterator const_iterator;
-      typedef typename RBTree<Key, T, Compare>::reverse_iterator reverse_iterator;
-
-      /* Member functions */
 
       map() : tree{} {} 
 
@@ -48,8 +45,6 @@ namespace s21 {
 
       ~map() = default;
 
-      /* Element access */
-
       T& at(const Key& key) {return tree.at(key);}
 
       const T& at(const Key& key) const {return tree.at(key);}
@@ -57,8 +52,6 @@ namespace s21 {
       T& operator[](const Key& key) {
         return tree[key];
       }
-
-      /* Iterators */
 
       iterator begin() noexcept {
         return tree.begin();
@@ -83,16 +76,6 @@ namespace s21 {
       const_iterator cend() const noexcept {
         return tree.cend();
       }
-
-      reverse_iterator rbegin() noexcept {
-        return tree.rbegin();
-      }
-
-      reverse_iterator rend() noexcept {
-        return tree.rend();
-      }
-
-      /* Capacity */
 
       bool empty() const noexcept {
         return tree.empty();

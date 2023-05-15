@@ -11,9 +11,13 @@ TEST_DIR=../test/
 
 .PHONY: all clean test gcov_report
 
-all: test
+all: test clean
 
-test: test_tree #test_vector test_list test_queue
+test: test_array #test_stack test_map test_tree test_vector test_list test_queue
+
+test_map:
+	$(CC) $(FLAGS) -I. map.h $(TEST_DIR)test_map.cc  -fsanitize=address -g $(TEST_FLAGS) -o test_map
+	./test_map
 
 test_tree:
 	$(CC) $(FLAGS) -I. rb_tree.h $(TEST_DIR)test_tree.cc  -fsanitize=address -g $(TEST_FLAGS) -o test_rb_tree
@@ -24,8 +28,16 @@ test_list:
 	./test_list
 
 test_set:
-	$(CC) $(FLAGS) -I. -I../RBTree set.h ../RBTree/rb_tree.h $(TEST_DIR)test_set.cc $(TEST_FLAGS) -o test_set
+	$(CC) $(FLAGS) -I. set.h rb_tree.h $(TEST_DIR)test_set.cc $(TEST_FLAGS) -o test_set
 	./test_set
+
+test_stack:
+	$(CC) $(FLAGS) -I. stack.h rb_tree.h $(TEST_DIR)test_stack.cc $(TEST_FLAGS) -o test_stack
+	./test_stack
+
+test_array:
+	$(CC) $(FLAGS) -I../containers_plus ../containers_plus/array.h $(TEST_DIR)test_array.cc $(TEST_FLAGS) -o test_array
+	./test_array
 
 test_queue:
 	$(CC) $(FLAGS) -I. queue.h $(TEST_DIR)test_queue.cc  $(TEST_FLAGS) -o test_queue
@@ -58,4 +70,4 @@ endif
 
 clean:
 	rm -rf objects *.gcno *.gcda *.o *.info report test_queue test_vector test_set test_list \
-	test_tree
+	test_tree test_map test_stack test_array

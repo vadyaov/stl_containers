@@ -13,7 +13,7 @@ TEST_DIR=../test/
 
 all: test clean
 
-test: test_array #test_stack test_map test_tree test_vector test_list test_queue
+test: test_set test_map #test_array test_stack test_tree test_vector test_list test_queue
 
 test_map:
 	$(CC) $(FLAGS) -I. map.h $(TEST_DIR)test_map.cc  -fsanitize=address -g $(TEST_FLAGS) -o test_map
@@ -28,7 +28,7 @@ test_list:
 	./test_list
 
 test_set:
-	$(CC) $(FLAGS) -I. set.h rb_tree.h $(TEST_DIR)test_set.cc $(TEST_FLAGS) -o test_set
+	$(CC) $(FLAGS) -I. set.h rb_tree.h $(TEST_DIR)test_set.cc -fsanitize=address -g $(TEST_FLAGS) -o test_set
 	./test_set
 
 test_stack:

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <vector>
 
 /* Красно-чёрным называется бинарное поисковое дерево, у которого каждому узлу
  * сопоставлен дополнительный атрибут — цвет и для которого выполняются
@@ -27,9 +28,9 @@ struct RBNode {
   RBNode* right;
   RBNode* parent;
   Color color;
-  explicit RBNode(K k, V v, Color c = Color::RED) :
+  RBNode(K k, V v, Color c = Color::RED) :
     key{k}, value{v}, left{nullptr}, right{nullptr}, parent {nullptr}, color{c} {}
-  explicit RBNode(std::pair<K, V> p, Color c = Color::RED) :
+  RBNode(std::pair<K, V> p, Color c = Color::RED) :
     key{p.first}, value{p.second}, left{nullptr}, right{nullptr}, parent {nullptr}, color{c} {}
 
   void printData() {
@@ -266,77 +267,113 @@ template<
       return std::pair<iterator, bool>(iterator(t), true);
     }
 
-    template< class... Args >
-      std::pair<iterator,bool> unique_emplace( Args&&... args ) {
-        RBNode<K,V>* newNode = alloc.allocate(1);
-        alloc.construct(newNode, RBNode<K,V>(std::forward<Args>(args)...));
-
-        if (empty()) {
-          newNode->color = Color::BLACK;
-          root = newNode;
-          return std::make_pair(iterator(newNode), true);
-        }
-        
-        node_ptr parent = nullptr;
-        node_ptr curr = root;
-        while (curr != nullptr) {
-            parent = curr;
-            if (comp(newNode->key, curr->key)) {
-                curr = curr->left;
-            } else if (comp(curr->key, newNode->key)) {
-                curr = curr->right;
-            } else {
-                alloc.deallocate(newNode, 1);
-                return std::make_pair(iterator(curr), false);
-            }
-        }
-        
-        newNode->parent = parent;
-        if (!parent) {
-            root = newNode;
-        } else if (comp(newNode->key, parent->key)) {
-            parent->left = newNode;
-        } else {
-            parent->right = newNode;
-        }
-        fixInsertion(newNode);
-        
-        return std::make_pair(iterator(newNode), true);
+template <class... Args>
+  std::vector<std::pair<iterator, bool>> emplace(Args &&...args) noexcept {
+    std::vector<std::pair<iterator, bool>> res_vector;
+    for (auto value : {std::forward<Args>(args)...}) {
+      /* node_ptr new_node = alloc.allocate(1); */
+      /* alloc.construct(new_node, RBNode<K, V>(value, V())); */
+      std::pair<iterator, bool> temp = insert(std::pair<K, V>(value, V()), false);
+      res_vector.push_back(temp);
     }
+    return res_vector;
+  }
 
-    template< class... Args >
-      std::pair<iterator,bool> nounique_emplace( Args&&... args ) {
-        RBNode<K,V>* newNode = alloc.allocate(1);
-        alloc.construct(newNode, RBNode<K,V>(std::forward<Args>(args)...));
-
-        if (empty()) {
-          newNode->color = Color::BLACK;
-          root = newNode;
-          return std::make_pair(iterator(newNode), true);
-        }
-        
-        node_ptr parent = nullptr;
-        node_ptr curr = root;
-        while (curr != nullptr) {
-            parent = curr;
-            if (comp(newNode->key, curr->key))
-                curr = curr->left;
-            else
-                curr = curr->right;
-        }
-        
-        newNode->parent = parent;
-        if (!parent) {
-            root = newNode;
-        } else if (comp(newNode->key, parent->key)) {
-            parent->left = newNode;
-        } else {
-            parent->right = newNode;
-        }
-        fixInsertion(newNode);
-        
-        return std::make_pair(iterator(newNode), true);
+  template <class... Args>
+  std::vector<std::pair<iterator, bool>> unique_emplace_s(Args &&...args) noexcept {
+    std::vector<std::pair<iterator, bool>> res_vector;
+    for (auto value : {std::forward<Args>(args)...}) {
+      /* node_ptr new_node = alloc.allocate(1); */
+      /* alloc.construct(new_node, RBNode<K, V>(value, V())); */
+      std::pair<iterator, bool> temp = insert(std::pair<K, V>(value, V()));
+      res_vector.push_back(temp);
     }
+    return res_vector;
+  }
+
+  template <class... Args>
+  std::vector<std::pair<iterator, bool>> unique_emplace_m(Args &&...args) noexcept {
+    std::vector<std::pair<iterator, bool>> res_vector;
+    for (auto value : {std::forward<Args>(args)...}) {
+      /* node_ptr new_node = alloc.allocate(1); */
+      /* alloc.construct(new_node, RBNode<K, V>(value, V())); */
+      std::pair<iterator, bool> temp = insert(value);
+      res_vector.push_back(temp);
+    }
+    return res_vector;
+  }
+
+    /* template< class... Args > */
+    /*   std::pair<iterator,bool> unique_emplace( Args&&... args ) { */
+    /*     RBNode<K,V>* newNode = alloc.allocate(1); */
+    /*     alloc.construct(newNode, RBNode<K,V>(std::forward<Args>(args)...)); */
+
+    /*     if (empty()) { */
+    /*       newNode->color = Color::BLACK; */
+    /*       root = newNode; */
+    /*       return std::make_pair(iterator(newNode), true); */
+    /*     } */
+        
+    /*     node_ptr parent = nullptr; */
+    /*     node_ptr curr = root; */
+    /*     while (curr != nullptr) { */
+    /*         parent = curr; */
+    /*         if (comp(newNode->key, curr->key)) { */
+    /*             curr = curr->left; */
+    /*         } else if (comp(curr->key, newNode->key)) { */
+    /*             curr = curr->right; */
+    /*         } else { */
+    /*             alloc.deallocate(newNode, 1); */
+    /*             return std::make_pair(iterator(curr), false); */
+    /*         } */
+    /*     } */
+        
+    /*     newNode->parent = parent; */
+    /*     if (!parent) { */
+    /*         root = newNode; */
+    /*     } else if (comp(newNode->key, parent->key)) { */
+    /*         parent->left = newNode; */
+    /*     } else { */
+    /*         parent->right = newNode; */
+    /*     } */
+    /*     fixInsertion(newNode); */
+        
+    /*     return std::make_pair(iterator(newNode), true); */
+    /* } */
+
+    /* template< class... Args > */
+    /*   std::pair<iterator,bool> nounique_emplace( Args&&... args ) { */
+    /*     RBNode<K,V>* newNode = alloc.allocate(1); */
+    /*     alloc.construct(newNode, RBNode<K,V>(std::forward<Args>(args)...)); */
+
+    /*     if (empty()) { */
+    /*       newNode->color = Color::BLACK; */
+    /*       root = newNode; */
+    /*       return std::make_pair(iterator(newNode), true); */
+    /*     } */
+        
+    /*     node_ptr parent = nullptr; */
+    /*     node_ptr curr = root; */
+    /*     while (curr != nullptr) { */
+    /*         parent = curr; */
+    /*         if (comp(newNode->key, curr->key)) */
+    /*             curr = curr->left; */
+    /*         else */
+    /*             curr = curr->right; */
+    /*     } */
+        
+    /*     newNode->parent = parent; */
+    /*     if (!parent) { */
+    /*         root = newNode; */
+    /*     } else if (comp(newNode->key, parent->key)) { */
+    /*         parent->left = newNode; */
+    /*     } else { */
+    /*         parent->right = newNode; */
+    /*     } */
+    /*     fixInsertion(newNode); */
+        
+    /*     return std::make_pair(iterator(newNode), true); */
+    /* } */
 
     size_type erase(const K& key) {
       if (empty()) return 0;

@@ -1,7 +1,7 @@
 #ifndef _MULTISET_H_
 #define _MULTISET_H_
 
-#include "rb_tree.h"
+#include "../containers/rb_tree.h"
 
 namespace s21 {
 
@@ -19,7 +19,6 @@ namespace s21 {
         typedef typename RBTree<Key, T, Compare>::const_reference const_reference;
         typedef typename RBTree<Key, T, Compare>::iterator iterator;
         typedef typename RBTree<Key, T, Compare>::const_iterator const_iterator;
-        typedef typename RBTree<Key, T, Compare>::reverse_iterator reverse_iterator;
 
       /* Member functions */
 
@@ -79,14 +78,6 @@ namespace s21 {
         return tree.cend();
       }
 
-      reverse_iterator rbegin() noexcept {
-        return tree.rbegin();
-      }
-
-      reverse_iterator rend() noexcept {
-        return tree.rend();
-      }
-
       /* Capacity */
 
       bool empty() const noexcept {
@@ -101,13 +92,24 @@ namespace s21 {
         tree.clear();
       }
 
+      std::pair<iterator, iterator> equal_range(const Key& key) {
+        return std::pair<iterator, iterator>(tree.lower_bound(key), tree.upper_bound(key));
+      }
+
+      size_type count(const Key& key) const {
+        size_type n = 0;
+        for (iterator it = tree.lower_bound(key); it != tree.upper_bound(key); ++it)
+          if (*it == key) ++n;
+        return n;
+      }
+
       std::pair<iterator, bool> insert(const value_type& value) {
         return tree.insert(std::make_pair(value, T()), false);
       }
 
       template<class... Args>
-        std::pair<iterator, bool> emplace(Args&&... args) {
-          return tree.nounique_emplace(args...);
+        std::vector<std::pair<iterator, bool>> emplace(Args&&... args) {
+          return tree.emplace(args...);
         }
 
       size_type erase(const Key& key) {

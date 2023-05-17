@@ -13,7 +13,7 @@ TEST_DIR=../test/
 
 all: test clean
 
-test: test_set test_map #test_array test_stack test_tree test_vector test_list test_queue
+test: test_multiset #test_set test_map test_array test_stack test_tree test_vector test_list test_queue
 
 test_map:
 	$(CC) $(FLAGS) -I. map.h $(TEST_DIR)test_map.cc  -fsanitize=address -g $(TEST_FLAGS) -o test_map
@@ -38,6 +38,10 @@ test_stack:
 test_array:
 	$(CC) $(FLAGS) -I../containers_plus ../containers_plus/array.h $(TEST_DIR)test_array.cc $(TEST_FLAGS) -o test_array
 	./test_array
+
+test_multiset:
+	$(CC) $(FLAGS) -I../containers_plus ../containers_plus/multiset.h $(TEST_DIR)test_multiset.cc $(TEST_FLAGS) -o test_multiset
+	./test_multiset
 
 test_queue:
 	$(CC) $(FLAGS) -I. queue.h $(TEST_DIR)test_queue.cc  $(TEST_FLAGS) -o test_queue
@@ -70,4 +74,4 @@ endif
 
 clean:
 	rm -rf objects *.gcno *.gcda *.o *.info report test_queue test_vector test_set test_list \
-	test_tree test_map test_stack test_array
+	test_tree test_map test_stack test_array test_multiset

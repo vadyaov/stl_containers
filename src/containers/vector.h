@@ -1,10 +1,9 @@
 #ifndef _STL_CONTAINERS_CONTAINERS_VECTOR_H_
 #define _STL_CONTAINERS_CONTAINERS_VECTOR_H_
 
-#include <iostream>
+#include <initializer_list>
 #include <memory>
 #include <stdexcept>
-#include <initializer_list>
 
 namespace s21 {
 
@@ -218,10 +217,9 @@ class vector {
     if (pos < begin() || pos > end())
       throw std::out_of_range("position is out of range");
 
-    if (size() == capacity())
-      reserve(size() == 0 ? 1 : size() * 2);
+    if (size() == capacity()) reserve(size() == 0 ? 1 : size() * 2);
 
-    vector_base<T, A> tmp (vb.alloc, size() - index);
+    vector_base<T, A> tmp(vb.alloc, size() - index);
     std::uninitialized_copy(vb.elem + index, vb.space, tmp.elem);
     std::uninitialized_copy(tmp.elem, tmp.space, vb.elem + index + 1);
     vb.alloc.construct(vb.elem + index, value);
@@ -235,10 +233,9 @@ class vector {
     if (pos < begin() || pos > end())
       throw std::out_of_range("position is out of range");
 
-    if (size() == capacity())
-      reserve(size() == 0 ? 1 : size() * 2);
+    if (size() == capacity()) reserve(size() == 0 ? 1 : size() * 2);
 
-    vector_base<T, A> tmp (vb.alloc, size() - index);
+    vector_base<T, A> tmp(vb.alloc, size() - index);
     std::uninitialized_copy(vb.elem + index, vb.space, tmp.elem);
     std::uninitialized_copy(tmp.elem, tmp.space, vb.elem + index + 1);
     vb.alloc.construct(vb.elem + index, std::move(value));
@@ -249,14 +246,13 @@ class vector {
 
   template <class... Args>
   iterator emplace(iterator pos, Args&&... args) {
-      if (pos > end() || pos < begin())
-          throw std::out_of_range("emplace");
-      iterator ret;
-      difference_type id = pos - begin();
+    if (pos > end() || pos < begin()) throw std::out_of_range("emplace");
+    iterator ret;
+    difference_type id = pos - begin();
 
-      for (auto&& item : {std::forward<Args>(args)...})
-          ret = insert(begin() + id, item);
-      return ret;
+    for (auto&& item : {std::forward<Args>(args)...})
+      ret = insert(begin() + id, item);
+    return ret;
   }
 
   template <class... Args>
@@ -265,7 +261,8 @@ class vector {
   }
 
   iterator erase(iterator pos) {
-    if (!(pos < end() && pos >= begin())) throw std::out_of_range("pos is out of range in erase");
+    if (!(pos < end() && pos >= begin()))
+      throw std::out_of_range("pos is out of range in erase");
     const difference_type index = pos - begin();
     vb.alloc.destroy(vb.elem + index);
     for (auto it = pos; it < end() - 1; ++it)
@@ -315,8 +312,7 @@ class vector {
 
   void resize(size_type newsize, const_reference value) {
     if (newsize < max_size()) {
-      if (newsize != 0)
-        reserve(std::max(newsize, capacity() * 2));
+      if (newsize != 0) reserve(std::max(newsize, capacity() * 2));
 
       if (size() < newsize) {
         std::uninitialized_fill(vb.elem + size(), vb.elem + newsize, value);
@@ -395,8 +391,7 @@ class vector {
     }
 
     difference_type operator-(iterator other) {
-      if (other.ptr == nullptr || ptr == nullptr)
-        return 0;
+      if (other.ptr == nullptr || ptr == nullptr) return 0;
       return ptr - other.ptr;
     }
     reference operator*() const { return *ptr; }
@@ -483,8 +478,7 @@ class vector {
       return tmp;
     }
     difference_type operator-(const_iterator other) {
-      if (other.ptr == nullptr || ptr == nullptr)
-        return 0;
+      if (other.ptr == nullptr || ptr == nullptr) return 0;
       return ptr - other.ptr;
     }
     reference operator*() const { return *ptr; }
@@ -570,8 +564,7 @@ class vector {
       return tmp;
     }
     difference_type operator-(reverse_iterator other) {
-      if (other.ptr == nullptr || ptr == nullptr)
-        return 0;
+      if (other.ptr == nullptr || ptr == nullptr) return 0;
       return other.ptr - ptr;
     }
     reference operator*() const { return *ptr; }
@@ -658,8 +651,7 @@ class vector {
       return tmp;
     }
     difference_type operator-(const_reverse_iterator other) {
-      if (other.ptr == nullptr || ptr == nullptr)
-        return 0;
+      if (other.ptr == nullptr || ptr == nullptr) return 0;
       return other.ptr - ptr;
     }
     reference operator*() const { return *ptr; }
@@ -669,7 +661,6 @@ class vector {
    private:
     pointer ptr;
   };
-
 };
 
 template <class T, class A>

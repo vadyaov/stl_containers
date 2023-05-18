@@ -5,68 +5,67 @@
 
 namespace s21 {
 
-  template<class T>
-    class queue {
-      public:
-        typedef list<T> Container;
-        typedef Container container_type;
-        typedef typename Container::value_type value_type;
-        typedef typename Container::size_type size_type;
-        typedef typename Container::reference reference;
-        typedef typename Container::const_reference const_reference;
+template <class T>
+class queue {
+ public:
+  typedef list<T> Container;
+  typedef Container container_type;
+  typedef typename Container::value_type value_type;
+  typedef typename Container::size_type size_type;
+  typedef typename Container::reference reference;
+  typedef typename Container::const_reference const_reference;
 
-        queue() : q{} {}
+  queue() : q{} {}
 
-        explicit queue( const Container& cont ) : q{cont} {}
+  explicit queue(const Container& cont) : q{cont} {}
 
-        explicit queue( std::initializer_list<value_type> init ) : q{init} {}
+  explicit queue(std::initializer_list<value_type> init) : q{init} {}
 
-        queue( const queue& other ) : q{other.q} {}
+  queue(const queue& other) : q{other.q} {}
 
-        queue& operator=( const queue& other ) {
-          q = other.q;
-          return *this;
-        }
+  queue& operator=(const queue& other) {
+    q = other.q;
+    return *this;
+  }
 
-        queue( queue&& other ) noexcept : q{std::move(other.q)} {}
+  queue(queue&& other) noexcept : q{std::move(other.q)} {}
 
-        queue& operator=( queue&& other ) noexcept {
-          q = std::move(other.q);
-          return *this;
-        }
+  queue& operator=(queue&& other) noexcept {
+    q = std::move(other.q);
+    return *this;
+  }
 
-        ~queue() = default;
+  ~queue() = default;
 
-        reference front() { return q.front(); }
-		
-        const_reference front() const { return q.front(); }
+  reference front() { return q.front(); }
 
-        reference back() { return q.back(); }
-		
-        const_reference back() const { return q.back(); }
+  const_reference front() const { return q.front(); }
 
-        bool empty() const { return q.empty(); }
-	
-        size_type size() const { return q.size(); }
+  reference back() { return q.back(); }
 
-        void push( const value_type& value ) { q.push_back(value); }
-		
-        void push( value_type&& value ) { q.push_back(std::move(value)); }
+  const_reference back() const { return q.back(); }
 
-        template< class... Args >
-          void emplace( Args&&... args ) {
-            q.emplace_back(std::forward<Args>(args)...);
-          }
+  bool empty() const { return q.empty(); }
 
-        void pop() { q.pop_front(); }
+  size_type size() const { return q.size(); }
 
-        void swap( queue& other ) noexcept { std::swap(q, other.q); }
+  void push(const value_type& value) { q.push_back(value); }
 
-      private:
-       Container q; 
-    };
+  void push(value_type&& value) { q.push_back(std::move(value)); }
 
-} // namespace s21
+  template <class... Args>
+  void emplace(Args&&... args) {
+    q.emplace_back(std::forward<Args>(args)...);
+  }
 
+  void pop() { q.pop_front(); }
+
+  void swap(queue& other) noexcept { std::swap(q, other.q); }
+
+ private:
+  Container q;
+};
+
+}  // namespace s21
 
 #endif  // _STL_CONTAINERS_CONTAINERS_QUEUE_H_

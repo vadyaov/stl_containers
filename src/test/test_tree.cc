@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
+
 #include <random>
+
 #include "../containers/rb_tree.h"
 
 int GetRandomValue() {
@@ -10,22 +12,21 @@ int GetRandomValue() {
 }
 
 class TreeTest : public ::testing::Test {
-  public:
-    typedef std::pair<int, int> ii_pair;
-    typedef std::pair<int, std::string> istr_pair;
-    typedef std::pair<std::string, int> stri_pair;
-  protected:
-    void SetUp() override {
-    }
+ public:
+  typedef std::pair<int, int> ii_pair;
+  typedef std::pair<int, std::string> istr_pair;
+  typedef std::pair<std::string, int> stri_pair;
 
-    RBTree<int, int> t0; // default int,int tree
-    RBTree<int, std::string> t1; // default int,string tree
-    RBTree<std::string, int> t2; // default string,int tree
+ protected:
+  void SetUp() override {}
 
-    RBTree<int, std::string> t3 {std::pair<int, std::string>(1, "one"),
-                                 std::pair<int, std::string>(2, "two"),
-                                 std::pair<int, std::string>(3, "three")
-                                };
+  RBTree<int, int> t0;          // default int,int tree
+  RBTree<int, std::string> t1;  // default int,string tree
+  RBTree<std::string, int> t2;  // default string,int tree
+
+  RBTree<int, std::string> t3{std::pair<int, std::string>(1, "one"),
+                              std::pair<int, std::string>(2, "two"),
+                              std::pair<int, std::string>(3, "three")};
 };
 
 TEST_F(TreeTest, def_ctor) {
@@ -35,7 +36,6 @@ TEST_F(TreeTest, def_ctor) {
 }
 
 TEST_F(TreeTest, cpy_ctor) {
-  
   t0.insert(ii_pair(0, 123));
   // not unique
   t0.insert(ii_pair(0, 123));
@@ -55,7 +55,7 @@ TEST_F(TreeTest, cpy_ctor) {
   t0.insert(ii_pair(57, 18));
   t0.insert(ii_pair(45, 18));
 
-  RBTree<int, int> a {t0};
+  RBTree<int, int> a{t0};
 
   ASSERT_EQ(!a.rb_assert(a.get_root()), false);
   ASSERT_EQ(a.size(), t0.size());
@@ -63,15 +63,13 @@ TEST_F(TreeTest, cpy_ctor) {
 
   auto it = a.begin();
   auto it1 = t0.begin();
-  for (; it != a.end(); ++it, ++it1)
-    ASSERT_EQ(*it, *it1);
+  for (; it != a.end(); ++it, ++it1) ASSERT_EQ(*it, *it1);
 
   ASSERT_EQ(it.get_ptr(), nullptr);
   ASSERT_EQ(it1.get_ptr(), nullptr);
 }
 
 TEST_F(TreeTest, cpy_assign) {
-  
   t0.insert(ii_pair(0, 123));
   // not unique
   t0.insert(ii_pair(0, 123));
@@ -105,15 +103,14 @@ TEST_F(TreeTest, cpy_assign) {
 
   auto it = a.begin();
   auto it1 = t0.begin();
-  for (; it != a.end(); ++it, ++it1)
-    ASSERT_EQ(*it, *it1);
+  for (; it != a.end(); ++it, ++it1) ASSERT_EQ(*it, *it1);
 
   ASSERT_EQ(it.get_ptr(), nullptr);
   ASSERT_EQ(it1.get_ptr(), nullptr);
 }
 
 TEST_F(TreeTest, move_ctor) {
-  RBTree<int, std::string> tr {std::move(t3)};
+  RBTree<int, std::string> tr{std::move(t3)};
 
   ASSERT_EQ(tr.size(), 3);
   ASSERT_EQ(t3.size(), 0);
@@ -141,7 +138,6 @@ TEST_F(TreeTest, begin) {
 }
 
 TEST_F(TreeTest, erase) {
-  
   for (int i = 0; i < 50; ++i) {
     t0.insert(ii_pair(GetRandomValue(), 14));
     ASSERT_EQ(t0.rb_assert(t0.get_root()) == 0, false);
@@ -159,50 +155,50 @@ TEST_F(TreeTest, erase) {
 }
 
 TEST_F(TreeTest, iterator) {
-    t0.insert(ii_pair(7, 0));
-    t0.insert(ii_pair(10, 0));
-    t0.insert(ii_pair(2, 1));
-    t0.insert(ii_pair(5, 2));
-    t0.insert(ii_pair(8, -1));
-    t0.insert(ii_pair(17, 3));
-    t0.insert(ii_pair(11, 4));
-    t0.insert(ii_pair(11, 2));
-    RBTree<int, int> b(t0);
-    auto it1 = t0.cbegin();
-    auto it2 = b.cbegin();
-    it1++;
-    it2++;
-    ++it1;
-    ++it2;
-    EXPECT_EQ(*it1, 7);
-    EXPECT_EQ(7, *it2);
-    EXPECT_EQ(*it1, *it2);
-    --it1;
-    --it2;
-    EXPECT_EQ(*it1, 5);
-    EXPECT_EQ(*it2, 5);
-    EXPECT_EQ(*it1, *it2);
-    for (auto i : t0) {
-      t1.insert(istr_pair(i, "HAHA"));
-    }
+  t0.insert(ii_pair(7, 0));
+  t0.insert(ii_pair(10, 0));
+  t0.insert(ii_pair(2, 1));
+  t0.insert(ii_pair(5, 2));
+  t0.insert(ii_pair(8, -1));
+  t0.insert(ii_pair(17, 3));
+  t0.insert(ii_pair(11, 4));
+  t0.insert(ii_pair(11, 2));
+  RBTree<int, int> b(t0);
+  auto it1 = t0.cbegin();
+  auto it2 = b.cbegin();
+  it1++;
+  it2++;
+  ++it1;
+  ++it2;
+  EXPECT_EQ(*it1, 7);
+  EXPECT_EQ(7, *it2);
+  EXPECT_EQ(*it1, *it2);
+  --it1;
+  --it2;
+  EXPECT_EQ(*it1, 5);
+  EXPECT_EQ(*it2, 5);
+  EXPECT_EQ(*it1, *it2);
+  for (auto i : t0) {
+    t1.insert(istr_pair(i, "HAHA"));
+  }
 }
 
 TEST_F(TreeTest, emplace_unique) {
-  t2.unique_emplace(stri_pair("hello", 1));
-  t2.unique_emplace(stri_pair("world", 1));
-  t2.unique_emplace(stri_pair("dog", 1));
-  t2.unique_emplace(stri_pair("hello", 1));
-  t2.unique_emplace(stri_pair("abob aboboa", 2));
+  t2.unique_emplace_m(stri_pair("hello", 1));
+  t2.unique_emplace_m(stri_pair("world", 1));
+  t2.unique_emplace_m(stri_pair("dog", 1));
+  t2.unique_emplace_m(stri_pair("hello", 1));
+  t2.unique_emplace_m(stri_pair("abob aboboa", 2));
   ASSERT_EQ(!t2.rb_assert(t2.get_root()), false);
   ASSERT_EQ(t2.size(), 4);
 }
 
 TEST_F(TreeTest, emplace_nounique) {
-  t2.nounique_emplace(stri_pair("hello", 1));
-  t2.nounique_emplace(stri_pair("world", 1));
-  t2.nounique_emplace(stri_pair("dog", 1));
-  t2.nounique_emplace(stri_pair("hello", 1));
-  t2.nounique_emplace(stri_pair("abob afgakjfl", 2));
+  t2.emplace("hello");
+  t2.emplace("world");
+  t2.emplace("dog");
+  t2.emplace("hello");
+  t2.emplace("abob afgakjfl");
   ASSERT_EQ(!t2.rb_assert(t2.get_root()), false);
   ASSERT_EQ(t2.size(), 5);
 }
@@ -217,9 +213,4 @@ TEST_F(TreeTest, beaces_operator) {
 
   const RBTree<int, int> t0_cpy = t0;
   ASSERT_EQ(t0[1], 10);
-}
-
-int main(int argc, char** argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

@@ -1,10 +1,9 @@
 #ifndef _STL_CONTAINERS_CONTAINERS_LIST_H_
 #define _STL_CONTAINERS_CONTAINERS_LIST_H_
 
-#include <iostream>
+#include <initializer_list>
 #include <memory>
 #include <stdexcept>
-#include <initializer_list>
 
 namespace s21 {
 
@@ -14,30 +13,6 @@ struct list_node {
   list_node *next;
   T key;
   list_node() : prev{nullptr}, next{nullptr}, key{T()} {}
-
-  /* explicit list_node(const T &val, list_node *p = nullptr, */
-  /*                    list_node *n = nullptr) */
-  /*     : prev{p}, next{n}, key{val} {} */
-
-  /* list_node(const list_node& other) = delete; */
-  /* list_node& operator=(const list_node& other) = delete; */
-
-  /* list_node(list_node&& other) noexcept : prev{other.prev}, next{other.next}, key{other.key} { */
-  /*   other.prev = nullptr; */
-  /*   other.next = nullptr; */
-  /* } */
-
-  /* list_node& operator=(list_node&& other) noexcept { */
-  /*   prev = other.prev; */
-  /*   next = other.next; */
-  /*   key = other.key; */
-
-  /*   other.prev = nullptr; */
-  /*   other.next = nullptr; */
-    
-  /*   return *this; */
-  /* } */
-
 };
 
 template <typename T, typename A = std::allocator<T>>
@@ -67,15 +42,13 @@ class list {
 
   explicit list(size_type count, const T &value, const A &alloc = A())
       : head{nullptr}, tail{nullptr}, sz{0}, allocator{alloc} {
-        /* std::cout << "inside ctor value = " << value << "\n"; */
     for (size_type i = 0; i < count; ++i) push_back(value);
   }
 
   explicit list(size_type count, const A &alloc = A())
       : list(count, T(), alloc) {}
 
-  list(const list &other) : list(other, other.allocator) {
-  }
+  list(const list &other) : list(other, other.allocator) {}
 
   list(const list &other, const A &alloc) : list(alloc) {
     for (node_ptr i = other.head; i; i = i->next) push_back(i->key);
@@ -114,8 +87,6 @@ class list {
                                 typename std::iterator_traits<
                                     InputIt>::iterator_category>::value>::type>
   list(InputIt first, InputIt last, const A &alloc = A()) : list(alloc) {
-    /* if (!(last > first)) throw std::length_error("last <= first"); */
-
     for (InputIt i = first; i != last; ++i) push_back(*i);
   }
 
@@ -290,8 +261,7 @@ class list {
   template <class... Args>
   iterator emplace(iterator pos, Args &&...args) {
     iterator it(pos.get_ptr());
-    for (auto&& item : {std::forward<Args>(args)...})
-      single_emplace(pos, item);
+    for (auto &&item : {std::forward<Args>(args)...}) single_emplace(pos, item);
     if (it == begin()) {
       emplace_front(args...);
       it = iterator(head);
@@ -402,7 +372,7 @@ class list {
       head = new_node;
       if (tail == nullptr) tail = head;
       sz++;
-    } catch(...) {
+    } catch (...) {
       allo.destroy(new_node);
       allo.deallocate(new_node, 1);
       throw;
@@ -419,7 +389,7 @@ class list {
       head = new_node;
       if (tail == nullptr) tail = head;
       sz++;
-    } catch(...) {
+    } catch (...) {
       allo.destroy(new_node);
       allo.deallocate(new_node, 1);
       throw;
@@ -574,12 +544,6 @@ class list {
   }
 
   void sort() { head = MergeSort(head); }
-
-  /* void print() { */
-  /*   for (auto i: *this) */
-  /*     std::cout << " " << i; */
-  /*   std::cout << std::endl; */
-  /* } */
 
   class iterator {
    public:
@@ -791,7 +755,6 @@ class list {
    private:
     node_ptr ptr;
   };
-
 
  private:
   node_ptr MergeSort(node_ptr head_) {

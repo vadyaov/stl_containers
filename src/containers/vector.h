@@ -4,6 +4,7 @@
 #include <initializer_list>
 #include <memory>
 #include <stdexcept>
+#include <algorithm>
 
 namespace s21 {
 
@@ -89,7 +90,8 @@ class vector {
   }
 
   ~vector() {
-    for (pointer p = vb.elem; p != vb.space; ++p) vb.alloc.destroy(p);
+    for (pointer p = vb.elem; p != vb.space; ++p) 
+        std::allocator_traits<A>::destroy(vb.alloc, p);
     vb.space = vb.elem;
   }
 
@@ -107,7 +109,9 @@ class vector {
     vb.alloc = other.vb.alloc;
     if (osz <= sz) {
       std::copy(other.begin(), other.begin() + osz, vb.elem);
-      for (pointer p = vb.elem + osz; p != vb.space; ++p) vb.alloc.destroy(p);
+      for (pointer p = vb.elem + osz; p != vb.space; ++p) 
+        std::allocator_traits<A>::destroy(vb.alloc, p);
+
     } else {
       std::copy(other.begin(), other.begin() + sz, vb.elem);
       std::uninitialized_copy(other.begin() + sz, other.end(), vb.space);
@@ -189,7 +193,7 @@ class vector {
   bool empty() const noexcept { return !size(); };
 
   size_type size() const noexcept { return vb.space - vb.elem; }
-  size_type max_size() const { return vb.alloc.max_size(); }
+  size_type max_size() const { return std::allocator_traits<A>::max_size(vb.alloc); }
 
   void reserve(size_type newalloc) {
     if (newalloc <= capacity()) return;
@@ -222,7 +226,8 @@ class vector {
     vector_base<T, A> tmp(vb.alloc, size() - index);
     std::uninitialized_copy(vb.elem + index, vb.space, tmp.elem);
     std::uninitialized_copy(tmp.elem, tmp.space, vb.elem + index + 1);
-    vb.alloc.construct(vb.elem + index, value);
+    ::new ((void*)(vb.elem + index)) T(value);
+    /* vb.alloc.construct(vb.elem + index, value); */
     ++vb.space;
 
     return begin() + index;
@@ -238,7 +243,8 @@ class vector {
     vector_base<T, A> tmp(vb.alloc, size() - index);
     std::uninitialized_copy(vb.elem + index, vb.space, tmp.elem);
     std::uninitialized_copy(tmp.elem, tmp.space, vb.elem + index + 1);
-    vb.alloc.construct(vb.elem + index, std::move(value));
+    ::new ((void*)(vb.elem + index)) T(std::move(value));
+    /* vb.alloc.construct(vb.elem + index, std::move(value)); */
     ++vb.space;
 
     return begin() + index;
@@ -264,10 +270,13 @@ class vector {
     if (!(pos < end() && pos >= begin()))
       throw std::out_of_range("pos is out of range in erase");
     const difference_type index = pos - begin();
-    vb.alloc.destroy(vb.elem + index);
+    /* vb.alloc.destroy(vb.elem + index); */
+    std::allocator_traits<A>::destroy(vb.alloc, vb.elem + index);
     for (auto it = pos; it < end() - 1; ++it)
-      vb.alloc.construct(std::addressof(*it), *(it + 1));
-    vb.alloc.destroy(vb.space - 1);
+      /* vb.alloc.construct(std::addressof(*it), *(it + 1)); */
+      ::new((void*)std::addressof(*it)) T(*(it + 1));
+    /* vb.alloc.destroy(vb.space - 1); */
+    std::allocator_traits<A>::destroy(vb.alloc, vb.space - 1);
     vb.space--;
     return begin() + index;
   }
@@ -280,7 +289,8 @@ class vector {
     difference_type sz = last - first;
 
     for (iterator it = first; it != last; ++it)
-      vb.alloc.destroy(std::addressof(*it));
+      /* vb.alloc.destroy(std::addressof(*it)); */
+      std::allocator_traits<A>::destroy(vb.alloc, std::addressof(*it));
 
     std::uninitialized_copy(first + sz, end(), first);
 
@@ -291,19 +301,22 @@ class vector {
 
   void push_back(const T& value) {
     if (capacity() == size()) reserve(size() ? size() * 2 : 1);
-    vb.alloc.construct(&vb.elem[size()], value);
+    /* vb.alloc.construct(&vb.elem[size()], value); */
+    ::new ((void*)&vb.elem[size()]) T(value);
     ++vb.space;
   }
 
   void push_back(T&& value) {
     if (capacity() == size()) reserve(size() ? size() * 2 : 1);
-    vb.alloc.construct(&vb.elem[size()], std::move(value));
+    /* vb.alloc.construct(&vb.elem[size()], std::move(value)); */
+    ::new ((void*)&vb.elem[size()]) T(std::move(value));
     ++vb.space;
   }
 
   void pop_back() {
     if (size() && vb.space) {
-      vb.alloc.destroy(vb.space - 1);
+      /* vb.alloc.destroy(vb.space - 1); */
+      std::allocator_traits<A>::destroy(vb.alloc, vb.space - 1);
       --vb.space;
     }
   }
@@ -318,7 +331,8 @@ class vector {
         std::uninitialized_fill(vb.elem + size(), vb.elem + newsize, value);
       } else {
         for (pointer p = vb.elem + newsize; p != vb.elem + size(); ++p)
-          vb.alloc.destroy(p);
+          /* vb.alloc.destroy(p); */
+        std::allocator_traits<A>::destroy(vb.alloc, p);
       }
       vb.space = vb.elem + newsize;
     }

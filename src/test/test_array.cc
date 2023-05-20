@@ -17,7 +17,6 @@ using std::pair;
 class ArrayTest : public ::testing::Test {};
 
 TEST(ArrayTest, InitializerListConstructor) {
-  array<char, 10> K;
   array<char, 7> A({'a', 'b', 'c', 'd', 'e'});
   original_array<char, 7> B({'a', 'b', 'c', 'd', 'e'});
   ;

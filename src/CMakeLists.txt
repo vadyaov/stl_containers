@@ -14,6 +14,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 add_compile_options(-Wall -Werror -Wextra -Wpedantic)
+add_compile_options(-fsanitize=address)
+add_link_options(-fsanitize=address)
 
 find_package(GTest REQUIRED)
 include(GoogleTest)

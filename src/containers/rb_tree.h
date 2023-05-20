@@ -219,7 +219,7 @@ class RBTree {
   std::pair<iterator, bool> insert(const std::pair<const K, V>& value,
                                    bool unique = true) {
     node_ptr t = alloc.allocate(1);
-    alloc.construct(t, RBNode<K, V>(value));
+    ::new((void*)t) RBNode<K, V>(value);
     if (empty()) {
       t->color = Color::BLACK;
       root = t;
@@ -688,8 +688,7 @@ class RBTree {
     if (src_node == nullptr) return nullptr;
 
     node_ptr new_node = alloc.allocate(1);
-    alloc.construct(new_node, RBNode<K, V>{src_node->key, src_node->value,
-                                           src_node->color});
+    ::new((void*)new_node) RBNode<K, V>{src_node->key, src_node->value, src_node->color};
     new_node->parent = parent;
     new_node->left = copy_node(src_node->left, new_node);
     new_node->right = copy_node(src_node->right, new_node);

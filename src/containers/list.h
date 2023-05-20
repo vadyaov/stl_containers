@@ -7,7 +7,7 @@
 
 namespace s21 {
 
-template <typename T, typename A = std::allocator<T>>
+template <typename T>
 struct list_node {
   list_node *prev;
   list_node *next;
@@ -18,7 +18,7 @@ struct list_node {
 template <typename T, typename A = std::allocator<T>>
 class list {
  public:
-  typedef A allocator_type;
+  typedef std::allocator_traits<A> allocator_type;
   typedef typename A::value_type value_type;
   typedef typename A::reference reference;
   typedef typename A::pointer pointer;
@@ -26,31 +26,27 @@ class list {
   typedef typename A::const_reference const_reference;
   typedef typename A::difference_type difference_type;
   typedef typename A::size_type size_type;
-  typedef typename A::template rebind<list_node<T, A>>::other NodeAllocator;
+  using NodeAllocator = typename std::allocator_traits<A>::template rebind_alloc<list_node<T>>;
 
-  typedef list_node<T, A> node;
-  typedef list_node<T, A> *node_ptr;
+  typedef list_node<T> node;
+  typedef list_node<T> *node_ptr;
 
   class iterator;
   class const_iterator;
   class reverse_iterator;
   class const_reverse_iterator;
 
-  list() : list(A()) {}
-  explicit list(const A &alloc)
-      : head{nullptr}, tail{nullptr}, sz{0}, allocator{alloc} {}
+  list() : head{nullptr}, tail{nullptr}, sz{0} {}
 
-  explicit list(size_type count, const T &value, const A &alloc = A())
-      : head{nullptr}, tail{nullptr}, sz{0}, allocator{alloc} {
+  explicit list(size_type count, const T &value)
+      : head{nullptr}, tail{nullptr}, sz{0} {
     for (size_type i = 0; i < count; ++i) push_back(value);
   }
 
-  explicit list(size_type count, const A &alloc = A())
-      : list(count, T(), alloc) {}
+  explicit list(size_type count)
+      : list(count, T()) {}
 
-  list(const list &other) : list(other, other.allocator) {}
-
-  list(const list &other, const A &alloc) : list(alloc) {
+  list(const list &other) : list() {
     for (node_ptr i = other.head; i; i = i->next) push_back(i->key);
   }
 
@@ -61,10 +57,8 @@ class list {
     return *this;
   }
 
-  list(list &&other) noexcept : list(std::move(other), other.allocator) {}
-
-  list(list &&other, const A &alloc) noexcept
-      : head{other.head}, tail{other.tail}, sz{other.sz}, allocator{alloc} {
+  list(list &&other) noexcept
+      : head{other.head}, tail{other.tail}, sz{other.sz} {
     other.head = other.tail = nullptr;
     other.sz = 0;
   }
@@ -86,12 +80,12 @@ class list {
                 std::is_base_of<std::input_iterator_tag,
                                 typename std::iterator_traits<
                                     InputIt>::iterator_category>::value>::type>
-  list(InputIt first, InputIt last, const A &alloc = A()) : list(alloc) {
+  list(InputIt first, InputIt last) : list() {
     for (InputIt i = first; i != last; ++i) push_back(*i);
   }
 
-  list(std::initializer_list<T> init, const A &alloc = A())
-      : list(init.begin(), init.end(), alloc) {}
+  list(std::initializer_list<T> init)
+      : list(init.begin(), init.end()) {}
 
   ~list() { dealloc(0); }
 
@@ -165,7 +159,7 @@ class list {
 
   /* Modifiers */
 
-  void clear() noexcept { resize(0); }
+  void clear() { resize(0); }
 
   iterator insert(iterator pos, const T &value) {
     iterator new_iterator(pos.get_ptr());
@@ -178,7 +172,8 @@ class list {
     } else {
       node_ptr tmp = pos.get_ptr();
       node_ptr new_node = allo.allocate(1);
-      allocator.construct(&new_node->key, value);
+      /* allocator.construct(&new_node->key, value); */
+      ::new((void*)&new_node->key) T(value);
       new_node->prev = tmp->prev;
       new_node->next = tmp;
       tmp->prev->next = new_node;
@@ -200,7 +195,8 @@ class list {
     } else {
       node_ptr tmp = pos.get_ptr();
       node_ptr new_node = allo.allocate(1);
-      allocator.construct(&new_node->key, std::move(value));
+      /* allocator.construct(&new_node->key, std::move(value)); */
+      ::new((void*)&new_node->key) T(std::move(value));
       new_node->prev = tmp->prev;
       new_node->next = tmp;
       tmp->prev->next = new_node;
@@ -272,7 +268,8 @@ class list {
       node_ptr tmp = pos.get_ptr();
       node_ptr new_node = allo.allocate(1);
       try {
-        allocator.construct(&new_node->key, std::forward<Args>(args)...);
+        /* allocator.construct(&new_node->key, std::forward<Args>(args)...); */
+        ::new((void*)&new_node->key) T(std::forward<Args>(args)...);
         new_node->prev = tmp->prev;
         new_node->next = tmp;
         tmp->prev->next = new_node;
@@ -300,7 +297,9 @@ class list {
       tmp->prev->next = tmp->next;
       tmp->next->prev = tmp->prev;
       it = iterator(tmp->next);
-      allo.destroy(tmp);
+      std::allocator_traits<A>::destroy(allocator, tmp);
+      /* allo.destroy(tmp); */
+      /* tmp->~T(); */
       allo.deallocate(tmp, 1);
       --sz;
     }
@@ -310,7 +309,8 @@ class list {
   void push_back(const T &value) {
     node_ptr new_node = allo.allocate(1);
     try {
-      allocator.construct(&new_node->key, value);
+      /* allocator.construct(&new_node->key, value); */
+      ::new((void*)&new_node->key) T(value);
       new_node->prev = tail;
       new_node->next = nullptr;
       if (tail != nullptr) tail->next = new_node;
@@ -318,7 +318,9 @@ class list {
       if (head == nullptr) head = tail;
       sz++;
     } catch (...) {
-      allo.destroy(new_node);
+      std::allocator_traits<A>::destroy(allocator, new_node);
+      /* allo.destroy(new_node); */
+      /* new_node->~T(); */
       allo.deallocate(new_node, 1);
       throw;
     }
@@ -327,7 +329,8 @@ class list {
   void push_back(T &&value) {
     node_ptr new_node = allo.allocate(1);
     try {
-      allocator.construct(&new_node->key, std::move(value));
+      /* allocator.construct(&new_node->key, std::move(value)); */
+      ::new((void*)&new_node->key) T(std::move(value));
       new_node->prev = tail;
       new_node->next = nullptr;
       if (tail) tail->next = new_node;
@@ -335,7 +338,9 @@ class list {
       if (head == nullptr) head = tail;
       sz++;
     } catch (...) {
-      allo.destroy(new_node);
+      std::allocator_traits<A>::destroy(allocator, new_node);
+      /* allo.destroy(new_node); */
+      /* new_node->~T(); */
       allo.deallocate(new_node, 1);
       throw;
     }
@@ -345,7 +350,8 @@ class list {
   reference emplace_back(Args &&...args) {
     node_ptr new_node = allo.allocate(1);
     try {
-      allocator.construct(&new_node->key, std::forward<Args>(args)...);
+      /* allocator.construct(&new_node->key, std::forward<Args>(args)...); */
+      ::new((void*)&new_node->key) T(std::forward<Args>(args)...);
       new_node->prev = tail;
       new_node->next = nullptr;
       if (tail) tail->next = new_node;
@@ -354,7 +360,9 @@ class list {
       sz++;
       return tail->key;
     } catch (...) {
-      allo.destroy(new_node);
+      std::allocator_traits<A>::destroy(allocator, new_node);
+      /* allo.destroy(new_node); */
+      /* new_node->~T(); */
       allo.deallocate(new_node, 1);
       throw;
     }
@@ -365,7 +373,8 @@ class list {
   void push_front(const T &value) {
     node_ptr new_node = allo.allocate(1);
     try {
-      allocator.construct(&new_node->key, value);
+      /* allocator.construct(&new_node->key, value); */
+      ::new((void*)&new_node->key) T(value);
       new_node->prev = nullptr;
       new_node->next = head;
       if (head) head->prev = new_node;
@@ -373,7 +382,9 @@ class list {
       if (tail == nullptr) tail = head;
       sz++;
     } catch (...) {
-      allo.destroy(new_node);
+      std::allocator_traits<A>::destroy(allocator, new_node);
+      /* allo.destroy(new_node); */
+      /* new_node->~T(); */
       allo.deallocate(new_node, 1);
       throw;
     }
@@ -382,7 +393,8 @@ class list {
   void push_front(T &&value) {
     node_ptr new_node = allo.allocate(1);
     try {
-      allocator.construct(&new_node->key, std::move(value));
+      /* allocator.construct(&new_node->key, std::move(value)); */
+      ::new((void*)&new_node->key) T(std::move(value));
       new_node->prev = nullptr;
       new_node->next = head;
       if (head) head->prev = new_node;
@@ -390,7 +402,9 @@ class list {
       if (tail == nullptr) tail = head;
       sz++;
     } catch (...) {
-      allo.destroy(new_node);
+      std::allocator_traits<A>::destroy(allocator, new_node);
+      /* allo.destroy(new_node); */
+      /* new_node->~T(); */
       allo.deallocate(new_node, 1);
       throw;
     }
@@ -400,7 +414,8 @@ class list {
   reference emplace_front(Args &&...args) {
     node_ptr new_node = allo.allocate(1);
     try {
-      allocator.construct(&new_node->key, std::forward<Args>(args)...);
+      /* allocator.construct(&new_node->key, std::forward<Args>(args)...); */
+      ::new((void*)&new_node->key) T(std::forward<Args>(args)...);
       new_node->prev = nullptr;
       new_node->next = head;
       if (head) head->prev = new_node;
@@ -409,7 +424,9 @@ class list {
       sz++;
       return head->key;
     } catch (...) {
-      allo.destroy(new_node);
+      std::allocator_traits<A>::destroy(allocator, new_node);
+      /* allo.destroy(new_node); */
+      /* new_node->~T(); */
       allo.deallocate(new_node, 1);
       throw;
     }
@@ -419,7 +436,9 @@ class list {
     node_ptr ptr = head;
     head = head->next;
     if (head) head->prev = nullptr;
-    allo.destroy(ptr);
+      std::allocator_traits<A>::destroy(allocator, ptr);
+    /* allo.destroy(ptr); */
+    /* ptr->~T(); */
     allo.deallocate(ptr, 1);
     --sz;
     if (sz == 0) head = tail = nullptr;
@@ -835,8 +854,8 @@ class list {
   }
 
  private:
-  list_node<T, A> *head;
-  list_node<T, A> *tail;
+  list_node<T> *head;
+  list_node<T> *tail;
   size_type sz;
   A allocator;
   NodeAllocator allo;

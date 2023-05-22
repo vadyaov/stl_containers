@@ -4,6 +4,7 @@
 #include <initializer_list>
 #include <memory>
 #include <stdexcept>
+#include <iostream>
 
 namespace s21 {
 
@@ -805,44 +806,62 @@ class list {
     return slow;
   }
 
-  node_ptr Merge(node_ptr leftHead, node_ptr rightHead) {
-    node dummy;
-    node_ptr tail_ = &dummy;
-    while (leftHead != nullptr && rightHead != nullptr) {
-      if (leftHead->key < rightHead->key) {
-        tail_->next = leftHead;
-        leftHead->prev = tail_;
-        leftHead = leftHead->next;
-      } else {
-        tail_->next = rightHead;
-        rightHead->prev = tail_;
-        rightHead = rightHead->next;
-      }
+node_ptr Merge(node_ptr leftHead, node_ptr rightHead) {
+  node_ptr mergedHead = nullptr;
+  node_ptr tail_ = nullptr;
 
-      tail_ = tail_->next;
-    }
+  if (leftHead == nullptr)
+    return rightHead;
+  if (rightHead == nullptr)
+    return leftHead;
 
-    if (leftHead != nullptr) {
+  if (leftHead->key < rightHead->key) {
+    mergedHead = leftHead;
+    mergedHead->prev = nullptr;
+    leftHead = leftHead->next;
+  } else {
+    mergedHead = rightHead;
+    mergedHead->prev = nullptr;
+    rightHead = rightHead->next;
+  }
+
+  tail_ = mergedHead;
+
+  while (leftHead != nullptr && rightHead != nullptr) {
+    if (leftHead->key < rightHead->key) {
       tail_->next = leftHead;
       leftHead->prev = tail_;
+      leftHead = leftHead->next;
     } else {
       tail_->next = rightHead;
       rightHead->prev = tail_;
+      rightHead = rightHead->next;
     }
 
-    while (tail_->next != nullptr) tail_ = tail_->next;
-
-    tail_->next = nullptr;
-    tail = tail_;
-
-    return dummy.next;
+    tail_ = tail_->next;
   }
+
+  if (leftHead != nullptr) {
+    tail_->next = leftHead;
+    leftHead->prev = tail_;
+  } else {
+    tail_->next = rightHead;
+    rightHead->prev = tail_;
+  }
+
+  while (tail_->next != nullptr)
+    tail_ = tail_->next;
+
+  tail = tail_;
+
+  return mergedHead;
+}
 
   void dealloc(size_type count) {
     if (tail && sz > count) {
       node_ptr tmp = tail, pre = tmp->prev;
       for (; sz != count; tmp = pre, pre = tmp ? tmp->prev : nullptr, --sz) {
-        tmp->key.~T();
+        std::allocator_traits<A>::destroy(allocator, &tmp->key);
         allo.deallocate(tmp, 1);
       }
       if (tmp && sz != 0) {

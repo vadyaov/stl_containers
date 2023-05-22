@@ -3,7 +3,7 @@
 #include "../containers_plus/multiset.h"
 #include "gtest/gtest.h"
 
-TEST(method, constructor) {
+TEST(TestMultiset, constructor) {
   s21::multiset<int> a{1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
   s21::multiset<int> b(a);
   s21::multiset<int> c{1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
@@ -22,7 +22,7 @@ TEST(method, constructor) {
   }
 }
 
-TEST(method, constructor2) {
+TEST(TestMultiset, constructor2) {
   s21::multiset<int> a{1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
   s21::multiset<int> b(std::move(a));
   s21::multiset<int> c{1, 1, 2, 2, 3, 3, 4, 4, 5, 5};
@@ -41,7 +41,7 @@ TEST(method, constructor2) {
   }
 }
 
-TEST(method, clear) {
+TEST(TestMultiset, clear) {
   s21::multiset<int> a;
   std::multiset<int> b;
   a.clear();
@@ -61,7 +61,7 @@ TEST(method, clear) {
   EXPECT_EQ(*a.cbegin(), *b.cbegin());
 }
 
-TEST(method, insert0) {
+TEST(TestMultiset, insert0) {
   s21::multiset<std::string> a{"clean", "add", "add", "is", "cat", "fox"};
   std::multiset<std::string> b{"clean", "add", "add", "is", "cat", "fox"};
   auto it1 = b.begin();
@@ -71,7 +71,7 @@ TEST(method, insert0) {
   }
 }
 
-TEST(method, insert1) {
+TEST(TestMultiset, insert1) {
   s21::multiset<double> a{1.223, 32.234, 3.2, 1.2, 34.123, 3.908, 4.23};
   std::multiset<double> b{1.223, 32.234, 3.2, 1.2, 34.123, 3.908, 4.23};
   auto it1 = b.begin();
@@ -88,7 +88,7 @@ TEST(method, insert1) {
   }
 }
 
-TEST(method, insert2) {
+TEST(TestMultiset, insert2) {
   std::multiset<int> d;
   s21::multiset<std::multiset<int>> a1{d, d};
   std::multiset<std::multiset<int>> b1{d, d};
@@ -99,7 +99,7 @@ TEST(method, insert2) {
   }
 }
 
-TEST(method, emplace) {
+TEST(TestMultiset, emplace) {
   s21::multiset<int> a;
   std::multiset<int> b;
   a.emplace(1);
@@ -123,7 +123,7 @@ TEST(method, emplace) {
   }
 }
 
-TEST(method, emplace1) {
+TEST(TestMultiset, emplace1) {
   s21::multiset<int> a{1, 2, 3, 40, 60};
   std::multiset<int> b{1, 2, 3, 40, 60};
   a.emplace(1);
@@ -147,7 +147,7 @@ TEST(method, emplace1) {
   }
 }
 
-TEST(method, emplace3) {
+TEST(TestMultiset, emplace3) {
   s21::multiset<int> a{1, 2, 3, 40, 60};
   std::multiset<int> b{1, 2, 3, 40, 60};
   a.emplace(1, 1, 2, 3, 4, 5);
@@ -165,7 +165,7 @@ TEST(method, emplace3) {
   }
 }
 
-TEST(method, emplace4) {
+TEST(TestMultiset, emplace4) {
   s21::multiset<int> a;
   std::multiset<int> b;
   a.emplace(1, 1, 2, 3, 4, 5);
@@ -183,7 +183,7 @@ TEST(method, emplace4) {
   }
 }
 
-TEST(method, erase_) {
+TEST(TestMultiset, erase_) {
   s21::multiset<int> a;
   std::multiset<int> b;
   EXPECT_EQ(a.size(), b.size());
@@ -196,7 +196,7 @@ TEST(method, erase_) {
   EXPECT_EQ(*a.cbegin(), 1);
 }
 
-TEST(method, swap__) {
+TEST(TestMultiset, swap__) {
   s21::multiset<int> a{1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5};
   s21::multiset<int> b{1, 2, 2};
   std::multiset<int> c{1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5};
@@ -217,7 +217,7 @@ TEST(method, swap__) {
   EXPECT_EQ(b.size(), d.size());
 }
 
-TEST(method, Find_) {
+TEST(TestMultiset, Find_) {
   s21::multiset<int> a{1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5};
   std::multiset<int> c{1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5};
   EXPECT_EQ(*a.find(2), *c.find(2));
@@ -225,7 +225,7 @@ TEST(method, Find_) {
   EXPECT_EQ(*a.find(5), *c.find(5));
 }
 
-TEST(method, equal_range) {
+TEST(TestMultiset, equal_range) {
   s21::multiset<int> a{1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5};
   std::multiset<int> c{1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5};
   std::pair<s21::multiset<int>::iterator, s21::multiset<int>::iterator> b0 =
@@ -252,7 +252,7 @@ TEST(method, equal_range) {
   }
 }
 
-TEST(method, count) {
+TEST(TestMultiset, count) {
   s21::multiset<int> a{1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5};
   std::multiset<int> c{1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5};
   a.count(1);
@@ -263,7 +263,7 @@ TEST(method, count) {
   EXPECT_EQ(a.count(5), c.count(5));
 }
 
-TEST(method, count2) {
+TEST(TestMultiset, count2) {
   const s21::multiset<int> a{1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5};
   const std::multiset<int> c{1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5};
   a.count(1);

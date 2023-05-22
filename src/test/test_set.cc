@@ -5,14 +5,14 @@
 
 #include "../containers/set.h"
 
-TEST(constructor, isdefault) {
+TEST(TestSet, isdefault) {
   std::set<int> a;
   s21::set<int> b;
   EXPECT_EQ(a.size(), b.size());
   EXPECT_EQ(a.empty(), b.empty());
 }
 
-TEST(constructor, copy) {
+TEST(TestSet, copy) {
   s21::set<int> a;
   a.insert(1);
   a.insert(2);
@@ -27,7 +27,7 @@ TEST(constructor, copy) {
   EXPECT_EQ(a.size(), b.size());
 }
 
-TEST(constructor, move) {
+TEST(TestSet, move) {
   s21::set<int> a;
   a.insert(1);
   a.insert(2);
@@ -48,7 +48,7 @@ TEST(constructor, move) {
   EXPECT_EQ(f.empty(), d.empty());
 }
 
-TEST(mathod, clear) {
+TEST(TestSet, clear) {
   s21::set<int> a;
   std::set<int> b;
   a.clear();
@@ -61,7 +61,7 @@ TEST(mathod, clear) {
   EXPECT_EQ(a.size(), b.size());
 }
 
-TEST(method, Erase) {
+TEST(TestSet, Erase) {
   s21::set<int> a{1, 2, 3, 4, 5, 6, 7};
   std::set<int> c{1, 2, 3, 4, 5, 6, 7};
   a.erase(*a.begin());
@@ -73,7 +73,7 @@ TEST(method, Erase) {
   }
 }
 
-TEST(method, Swap_) {
+TEST(TestSet, Swap_) {
   s21::set<int> a{1, 2, 3, 4, 5, 6, 7};
   s21::set<int> b{3, 2};
   std::set<int> c{1, 2, 3, 4, 5, 6, 7};
@@ -101,7 +101,7 @@ TEST(method, Swap_) {
   EXPECT_EQ(a.size(), d.size());
 }
 
-TEST(method, Find) {
+TEST(TestSet, Find) {
   s21::set<int> a{1, 2, 3, 4, 5, 6, 11, 7, 0};
   std::set<int> c{1, 2, 3, 4, 5, 6, 11, 7, 0};
   EXPECT_EQ(*a.find(7), *c.find(7));
@@ -110,7 +110,7 @@ TEST(method, Find) {
   EXPECT_EQ(*a.find(1), *c.find(1));
 }
 
-TEST(method, Emplace) {
+TEST(TestSet, Emplace) {
   s21::set<int> a;
   std::set<int> b;
   a.emplace(1);
@@ -134,7 +134,7 @@ TEST(method, Emplace) {
   }
 }
 
-TEST(method, Emplace1) {
+TEST(TestSet, Emplace1) {
   s21::set<int> a{1, 2, 3, 40, 60};
   std::set<int> b{1, 2, 3, 40, 60};
   a.emplace(1);
@@ -158,7 +158,7 @@ TEST(method, Emplace1) {
   }
 }
 
-TEST(method, Emplace3) {
+TEST(TestSet, Emplace3) {
   s21::set<int> a{1, 2, 3, 40, 60};
   std::set<int> b{1, 2, 3, 40, 60};
   a.emplace(1, 1, 2, 3, 4, 5);
@@ -177,7 +177,7 @@ TEST(method, Emplace3) {
   }
 }
 
-TEST(method, Emplace4) {
+TEST(TestSet, Emplace4) {
   s21::set<int> a;
   std::set<int> b;
   a.emplace(1, 1, 2, 3, 4, 5);

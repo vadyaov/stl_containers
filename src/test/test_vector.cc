@@ -316,20 +316,13 @@ TEST_F(VectorTest, erase) {
   ASSERT_EQ(*v1.erase(v1.begin() + 2, v1.begin() + 3),
             *stdv1.erase(stdv1.begin() + 2, stdv1.begin() + 3));
 
-  for (auto i : v1)
-    std::cout << ' ' << i;
-  std::cout << std::endl;
-  for (auto i : stdv1)
-    std::cout << ' ' << i;
-  std::cout << std::endl;
-
-  for (auto i = stdv1.size() - 1; i >= 0; --i)
+  for (auto i = stdv1.size() - 1; i != 0; --i)
     ASSERT_EQ(v1[i], stdv1[i]);
 
-  /* ASSERT_EQ(v1[0], stdv1[0]); */
+  ASSERT_EQ(v1[0], stdv1[0]);
 
-  /* ASSERT_EQ(v1.size(), stdv1.size()); */
-  /* ASSERT_EQ(v1.capacity(), stdv1.capacity()); */
+  ASSERT_EQ(v1.size(), stdv1.size());
+  ASSERT_EQ(v1.capacity(), stdv1.capacity());
 }
 
 TEST_F(VectorTest, erase_edge) {

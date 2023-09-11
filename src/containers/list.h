@@ -258,7 +258,7 @@ class list {
   template <class... Args>
   iterator emplace(iterator pos, Args &&...args) {
     iterator it(pos.get_ptr());
-    for (auto &&item : {std::forward<Args>(args)...}) single_emplace(pos, item);
+    /* for (auto &&item : {std::forward<Args>(args)...}) single_emplace(pos, item); */
     if (it == begin()) {
       emplace_front(args...);
       it = iterator(head);
